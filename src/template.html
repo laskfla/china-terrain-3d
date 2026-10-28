@@ -73,17 +73,38 @@ body {
 .lb.city .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fff; border: 1.5px solid #222; margin-right: 4px; vertical-align: 0; }
 .lb.city.cap { font-weight: 700; }
 .lb.city.cap .dot { background: #c0392b; border-color: #fff; width: 7px; height: 7px; }
+.lb.city.anc { font-family: var(--font-display); font-size: 12.5px; color: #2b1d12; }
+.lb.city.anc .dot { border-color: #4a2e1a; }
+.lb.city.anc.cap { font-size: 14px; color: #7a1d10; }
+.lb.city.anc.cap .dot { background: #b0281a; border: 2px solid #fff6e8; box-shadow: 0 0 0 1px #7a1d10; width: 8px; height: 8px; }
+.lb.city.anc.minor { font-size: 11px; font-weight: 600; }
 .lb.grid { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+.lb.polity { font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: 0.18em; color: #1c1612;
+  text-shadow: 0 0 3px rgba(250, 245, 234, 1), 0 0 7px rgba(250, 245, 234, 0.9); }
+.lb.polity.rival { font-size: 15.5px; }
+.lb.polity.protectorate { font-size: 12.5px; font-weight: 600; letter-spacing: 0.1em; }
+.lb.polity.neighbor { font-size: 13px; letter-spacing: 0.12em; color: #5a2d18; }
+
+.pl-list { display: flex; flex-wrap: wrap; gap: 5px 12px; max-height: 92px; overflow: auto; }
+.pl { appearance: none; border: 0; background: none; padding: 1px 0; color: var(--ink); cursor: pointer; font: 600 12px var(--font-body); display: inline-flex; align-items: center; gap: 5px; }
+.pl:hover { color: var(--accent); }
+.pl .sw { width: 11px; height: 11px; border-radius: 2px; background: color-mix(in srgb, var(--c) 55%, transparent); border: 1.5px solid var(--c); }
+.pl.protectorate .sw { border-style: dashed; background: color-mix(in srgb, var(--c) 30%, transparent); }
 
 .hud { position: fixed; z-index: 5; }
 #head { top: 14px; left: max(16px, env(safe-area-inset-left, 0px)); max-width: min(60vw, 440px); pointer-events: none; }
-#head h1, #head p { text-shadow: 0 0 4px var(--ground), 0 0 10px var(--ground), 0 0 16px var(--ground); }
+#head h1 { text-shadow: 0 0 4px var(--ground), 0 0 10px var(--ground), 0 0 16px var(--ground); }
 #head h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: 0.18em; line-height: 1.2; text-wrap: balance; }
-#head p { margin: 4px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
-.hint-touch { display: none; }
-@media (hover: none) and (pointer: coarse) { .hint-mouse { display: none; } .hint-touch { display: block; } }
 
-#viewbtns { top: 14px; right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
+#topright { top: 14px; right: max(16px, env(safe-area-inset-right, 0px)); display: grid; justify-items: end; gap: 8px; }
+#viewbtns { display: flex; gap: 8px; }
+#hints { pointer-events: none; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 10px; padding: 6px 11px;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 11.5px; line-height: 1.7; }
+#hints dl { margin: 0; display: grid; grid-template-columns: auto auto; column-gap: 10px; }
+#hints dt { font-weight: 600; color: var(--ink); text-align: right; }
+#hints dd { margin: 0; color: var(--muted); }
+#hints .hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) { #hints .hint-mouse { display: none; } #hints .hint-touch { display: grid; } }
 .btn { appearance: none; border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   font: 600 12.5px var(--font-body); padding: 8px 12px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
@@ -111,6 +132,7 @@ body {
 .legend-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; margin-top: 4px; font-size: 10.5px; color: var(--muted); }
 .legend-foot .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
 #note { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: 6px; max-width: 48ch; }
+#note a { color: var(--accent); }
 
 #controls { display: grid; gap: 9px; width: min(440px, 100%); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -123,6 +145,21 @@ body {
 .slider output { font-family: var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 
+#timeline { flex: 1 1 380px; max-width: 760px; display: grid; gap: 7px; }
+.tl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.tl-head b { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.14em; }
+.tl-head .num { font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.tl-head .seat { font-size: 11.5px; color: var(--muted); }
+.tl-row { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 8px; }
+.tl-row .btn { width: 30px; height: 30px; padding: 0; justify-content: center; font-size: 15px; }
+.tl-track { position: relative; padding-top: 15px; }
+.tl-bands { position: absolute; left: 0; right: 0; top: 0; height: 12px; border-radius: 3px; overflow: hidden; }
+.tl-band { position: absolute; top: 0; bottom: 0; border-right: 1px solid var(--panel); cursor: pointer; opacity: 0.8;
+  font-size: 9.5px; line-height: 12px; color: #fff; text-align: center; overflow: hidden; white-space: nowrap; }
+.tl-band.cur { opacity: 1; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.tl-track input[type=range] { display: block; margin: 0; }
+#tlNote { font-size: 11.5px; color: var(--muted); line-height: 1.5; min-height: 1.5em; }
+
 #readout { left: 50%; transform: translateX(-50%); bottom: calc(176px + env(safe-area-inset-bottom, 0px)); pointer-events: none;
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px;
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
@@ -133,7 +170,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
 @media (max-width: 640px) {
   #head h1 { font-size: 19px; }
-  #head p { font-size: 11px; }
+  #hints { font-size: 11px; padding: 4px 9px; }
   #tray { flex-direction: column-reverse; align-items: stretch; }
   #legend, #controls { width: 100%; }
   #readout { bottom: calc(250px + env(safe-area-inset-bottom, 0px)); }
@@ -143,6 +180,14 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   .lb.range { font-size: 11px; }
   #note { display: none; }
   #zoombtns { top: auto; transform: none; bottom: calc(262px + env(safe-area-inset-bottom, 0px)); }
+  #timeline { flex: none; max-width: none; }
+  #viewbtns { gap: 6px; }
+  #viewbtns .lbl { display: none; }
+  #viewbtns .btn { padding: 8px 10px; }
+  #head { max-width: calc(100vw - 210px); }
+  body.hist #legend { display: none; }
+  body.hist #readout { bottom: calc(280px + env(safe-area-inset-bottom, 0px)); }
+  body.hist #zoombtns { bottom: calc(292px + env(safe-area-inset-bottom, 0px)); }
 }
 </style>
 
@@ -151,15 +196,32 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
 <header id="head" class="hud">
   <h1>中国三维地形</h1>
-  <p class="hint-mouse">左键拖动平移 · 滚轮在指针处缩放 · 双击放大 · 右键或 Shift+拖动旋转 · 点地形查海拔</p>
-  <p class="hint-touch">单指拖动平移 · 双指捏合在该处缩放 · 双指拖动旋转 · 轻点查海拔</p>
 </header>
 
-<div id="viewbtns" class="hud">
-  <button class="btn" id="spin" aria-pressed="false" type="button">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M12.4 1.6v2.8H9.6"/></svg>自动旋转</button>
-  <button class="btn" id="reset" type="button">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/></svg>复位</button>
+<div id="topright" class="hud">
+<div id="viewbtns">
+  <button class="btn" id="histBtn" aria-pressed="true" type="button">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.6"/></svg>历代疆域</button>
+  <button class="btn" id="spin" aria-pressed="false" type="button" aria-label="自动旋转">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M12.4 1.6v2.8H9.6"/></svg><span class="lbl">自动旋转</span></button>
+  <button class="btn" id="reset" type="button" aria-label="复位">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/></svg><span class="lbl">复位</span></button>
+</div>
+<div id="hints" aria-label="操作说明">
+  <dl class="hint-mouse">
+    <dt>左键拖动</dt><dd>平移</dd>
+    <dt>滚轮</dt><dd>在指针处缩放</dd>
+    <dt>双击</dt><dd>放大</dd>
+    <dt>右键 / Shift+拖动</dt><dd>旋转</dd>
+    <dt>点地形</dt><dd>查海拔与归属</dd>
+  </dl>
+  <dl class="hint-touch">
+    <dt>单指拖动</dt><dd>平移</dd>
+    <dt>双指捏合</dt><dd>缩放</dd>
+    <dt>双指拖动</dt><dd>旋转</dd>
+    <dt>轻点</dt><dd>查海拔与归属</dd>
+  </dl>
+</div>
 </div>
 <div id="zoombtns" class="hud">
   <button class="btn" id="zin" type="button" aria-label="放大">+</button>
@@ -171,6 +233,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
 <div id="tray" class="hud">
   <div id="legend" class="card">
+    <div id="elevLegend">
     <h2>海拔（米）</h2>
     <div class="ramp" id="ramp"></div>
     <div class="ticks" id="ticks"></div>
@@ -180,19 +243,34 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       <span><span class="sw" style="background:linear-gradient(#ee8fb0,#ee8fb0) padding-box;border-top:2px dashed #5c1238;height:6px;border-radius:0"></span>国界</span>
       <span>▲ 山峰 · 米</span>
     </div>
-    <div id="note">高程来自 NASA 全球地形数据（约 9 公里网格），近看时的细部起伏按当地起伏度程序生成，仅作示意。省界、国界据 ECharts 地图数据。</div>
+    </div>
+    <div id="polLegend" class="pl-list" hidden></div>
+    <div id="note">高程来自 NASA 全球地形数据（约 9 公里网格），近看时的细部起伏按当地起伏度程序生成，仅作示意。省界、国界据 ECharts 地图数据；历代疆域受 <a href="https://github.com/DeanChensj/jiangshan-map" target="_blank" rel="noopener">jiangshan-map（江山时序）</a>启发并取自其数据，为示意性复原。</div>
+  </div>
+  <div id="timeline" class="card" hidden>
+    <div class="tl-head"><b id="tlEra"></b><span class="num" id="tlYear"></span><span class="seat" id="tlSeat"></span></div>
+    <div class="tl-row">
+      <button class="btn" id="tlPrev" type="button" aria-label="上一阶段">‹</button>
+      <button class="btn" id="tlNext" type="button" aria-label="下一阶段">›</button>
+      <div class="tl-track"><div class="tl-bands" id="tlBands"></div>
+        <input type="range" id="tlYearIn" min="-403" max="2026" step="1" value="741" aria-label="年份"></div>
+      <button class="btn" id="tlPlay" type="button" aria-label="自动播放" aria-pressed="false">▶</button>
+    </div>
+    <div id="tlNote"></div>
   </div>
   <div id="controls" class="card">
     <div class="chips" role="group" aria-label="图层">
+      <button class="chip" type="button" data-layer="territory" data-mode="hist" aria-pressed="true">疆域</button>
+      <button class="chip" type="button" data-layer="ancient" data-mode="hist" aria-pressed="true">古城</button>
       <button class="chip" type="button" data-layer="region" aria-pressed="true">地形区</button>
       <button class="chip" type="button" data-layer="range" aria-pressed="true">山脉</button>
       <button class="chip" type="button" data-layer="peak" aria-pressed="true">山峰</button>
       <button class="chip" type="button" data-layer="water" aria-pressed="true">河湖海</button>
-      <button class="chip" type="button" data-layer="city" aria-pressed="true">城市</button>
-      <button class="chip" type="button" data-layer="country" aria-pressed="true">国名</button>
-      <button class="chip" type="button" data-layer="nborder" aria-pressed="true">国界</button>
-      <button class="chip" type="button" data-layer="border" aria-pressed="true">省界</button>
-      <button class="chip" type="button" data-layer="prov" aria-pressed="false">省名</button>
+      <button class="chip" type="button" data-layer="city" data-mode="modern" aria-pressed="true">城市</button>
+      <button class="chip" type="button" data-layer="country" data-mode="modern" aria-pressed="true">国名</button>
+      <button class="chip" type="button" data-layer="nborder" data-mode="modern" aria-pressed="true">国界</button>
+      <button class="chip" type="button" data-layer="border" data-mode="modern" aria-pressed="true">省界</button>
+      <button class="chip" type="button" data-layer="prov" data-mode="modern" aria-pressed="false">省名</button>
     </div>
     <label class="slider" for="exag">垂直夸张
       <input type="range" id="exag" min="5" max="45" step="1" value="20">
@@ -202,6 +280,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 </div>
 
 <script id="terrain-data" type="application/json">__TERRAIN__</script>
+<script id="history-data" type="application/json">__HISTORY__</script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script>
@@ -234,11 +313,17 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     var l = STOP_RGB[STOP_RGB.length - 1]; out[0] = l[1]; out[1] = l[2]; out[2] = l[3];
   }
   var WATER_C = new THREE.Color("#4f8fc0");
+  // modern view: full hypsometric tint with today's neighbours muted;
+  // historical view: the tint faded towards parchment so territory colours read on top
+  var histTone = false, PAPER = [0.95, 0.91, 0.82];
   function colorFor(e, reg, isWater, slope, out) {
     if (isWater) { out[0] = WATER_C.r; out[1] = WATER_C.g; out[2] = WATER_C.b; return; }
     ramp(e, out);
     if (slope) { var k = 1 - Math.min(0.22, slope * 0.22); out[0] *= k; out[1] *= k; out[2] *= k; }
-    if (reg > NPROV) { // neighbouring countries: slightly muted
+    if (histTone) {
+      var lum = out[0] * 0.3 + out[1] * 0.55 + out[2] * 0.15, pk = 0.74 + 0.32 * lum;
+      for (var c = 0; c < 3; c++) out[c] = out[c] * 0.3 + PAPER[c] * pk * 0.7;
+    } else if (reg > NPROV) { // neighbouring countries: slightly muted
       var l = out[0] * 0.3 + out[1] * 0.55 + out[2] * 0.15;
       out[0] = out[0] * 0.5 + l * 0.5 + 0.05; out[1] = out[1] * 0.5 + l * 0.5 + 0.045; out[2] = out[2] * 0.5 + l * 0.5 + 0.04;
     }
@@ -394,18 +479,38 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     sh.fragmentShader = "varying vec2 vPXZ;\nuniform vec4 uPatch;\n" + sh.fragmentShader.replace("void main() {",
       "void main() {\n if (vPXZ.x > uPatch.x && vPXZ.x < uPatch.z && vPXZ.y > uPatch.y && vPXZ.y < uPatch.w) discard;");
   }
-  function buildTerrain() {
-    var n = NX * NY, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rgb = [0, 0, 0];
-    for (var j = 0; j < NY; j++) for (var i = 0; i < NX; i++) {
-      var k = j * NX + i;
-      pos[k * 3] = lonToX(LON0 + i * RES); pos[k * 3 + 2] = latToZ(LAT1 - j * RES);
+  // historical territory overlay: a lon/lat canvas texture multiplied into the terrain colour
+  var histUniforms = { uHist: { value: null }, uHistOn: { value: 0 }, uHistBox: { value: new THREE.Vector4(0, 0, 1, 1) } };
+  function histShader(sh, withDiscard) {
+    if (withDiscard) patchDiscard(sh);
+    else {
+      sh.vertexShader = "varying vec2 vPXZ;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvPXZ = (modelMatrix * vec4(transformed, 1.0)).xz;");
+      sh.fragmentShader = "varying vec2 vPXZ;\n" + sh.fragmentShader;
+    }
+    sh.uniforms.uHist = histUniforms.uHist; sh.uniforms.uHistOn = histUniforms.uHistOn; sh.uniforms.uHistBox = histUniforms.uHistBox;
+    sh.fragmentShader = "uniform sampler2D uHist;\nuniform float uHistOn;\nuniform vec4 uHistBox;\n" + sh.fragmentShader.replace("#include <color_fragment>",
+      "#include <color_fragment>\n if (uHistOn > 0.5) { vec4 hc = texture2D(uHist, (vPXZ - uHistBox.xy) / uHistBox.zw); diffuseColor.rgb *= mix(vec3(1.0), hc.rgb, hc.a); }");
+  }
+  var baseCol;
+  function recolorBase() {
+    var n = NX * NY, rgb = [0, 0, 0];
+    for (var k = 0; k < n; k++) {
       var reg = REGION[k];
       if (!reg) { // ocean vertex next to the coast: borrow a land neighbour's tint
         reg = REGION[Math.max(0, k - 1)] || REGION[Math.min(n - 1, k + 1)] || REGION[Math.max(0, k - NX)] || REGION[Math.min(n - 1, k + NX)];
       }
       colorFor(H[k], reg, WATER[k], 0, rgb);
-      col[k * 3] = rgb[0]; col[k * 3 + 1] = rgb[1]; col[k * 3 + 2] = rgb[2];
+      baseCol[k * 3] = rgb[0]; baseCol[k * 3 + 1] = rgb[1]; baseCol[k * 3 + 2] = rgb[2];
     }
+    if (terrainGeo) terrainGeo.attributes.color.needsUpdate = true;
+  }
+  function buildTerrain() {
+    var n = NX * NY, pos = new Float32Array(n * 3), col = baseCol = new Float32Array(n * 3);
+    for (var j = 0; j < NY; j++) for (var i = 0; i < NX; i++) {
+      var k = j * NX + i;
+      pos[k * 3] = lonToX(LON0 + i * RES); pos[k * 3 + 2] = latToZ(LAT1 - j * RES);
+    }
+    recolorBase();
     var CW = NX - 1, cnt = 0;
     for (var c = 0; c < CELL.length; c++) cnt += CELL[c];
     var idx = new Uint32Array(cnt * 6), p = 0;
@@ -421,7 +526,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     terrainGeo.setAttribute("color", new THREE.BufferAttribute(col, 3));
     terrainGeo.setIndex(new THREE.BufferAttribute(idx, 1));
     terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    terrainMat.onBeforeCompile = patchDiscard;
+    terrainMat.onBeforeCompile = function (sh) { histShader(sh, true); };
     scene.add(new THREE.Mesh(terrainGeo, terrainMat));
 
     // side walls along the land boundary
@@ -487,7 +592,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   patchGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
   patchGeo.setAttribute("normal", new THREE.BufferAttribute(pNrm, 3));
   patchGeo.setAttribute("color", new THREE.BufferAttribute(pCol, 3));
-  var patchMesh = new THREE.Mesh(patchGeo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  var patchMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  patchMat.onBeforeCompile = function (sh) { histShader(sh, false); };
+  var patchMesh = new THREE.Mesh(patchGeo, patchMat);
   patchMesh.visible = false; patchMesh.frustumCulled = false;
   scene.add(patchMesh);
   var PATCH_MAX_D = 320;
@@ -690,17 +797,21 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     var d = camera.position.distanceTo(controls.target);
     return 2 * d * Math.tan(camera.fov * Math.PI / 360) / Math.max(1, window.innerHeight);
   }
-  function addBorderRibbons(list, layer, haloPx, corePx, haloColor, haloOpacity, coreColor, dashPx) {
-    var lines = [];
-    list.forEach(function (flat) {
+  function flatLines(list) { // quantised flat [lon*200, lat*200, ...] runs -> [[lon, lat], ...] lines
+    return list.map(function (flat) {
       var r = [];
       for (var i = 0; i < flat.length; i += 2) r.push([LON0 + flat[i] / 200, LAT0 + flat[i + 1] / 200]);
-      if (r.length >= 2) lines.push(densify(r, 0.012));
+      return r;
     });
-    var nPts = 0; lines.forEach(function (l) { nPts += l.length; });
-    var P = new Float32Array(nPts * 4), dist = new Float32Array(nPts * 2), idx = [], base = 0;
-    lines.forEach(function (l) {
-      var acc = 0;
+  }
+  // lines ([[lon, lat], ...]) -> ribbon centre points with unit normals, distance along the line and triangles
+  function ribbonGeometry(lines, step) {
+    var dl = [];
+    lines.forEach(function (r) { if (r.length >= 2) dl.push(densify(r, step)); });
+    var nPts = 0; dl.forEach(function (l) { nPts += l.length; });
+    var P = new Float32Array(nPts * 4), dist = new Float32Array(nPts * 2), idx = [], base = 0, starts = [];
+    dl.forEach(function (l) {
+      var acc = 0; starts.push(base);
       for (var i = 0; i < l.length; i++) {
         var p = l[i], q = l[Math.min(l.length - 1, i + 1)], r = l[Math.max(0, i - 1)];
         var tx = (q[0] - r[0]) * KX, tz = -(q[1] - r[1]) * KZ, L = Math.hypot(tx, tz) || 1, k = base + i;
@@ -711,37 +822,52 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       }
       base += l.length;
     });
-    function make(widthPx, mat, liftPx, order) {
-      var pos = new Float32Array(nPts * 6), geo = new THREE.BufferGeometry();
-      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      geo.setAttribute("aDist", new THREE.BufferAttribute(dist, 1));
-      geo.setIndex(idx);
-      var mesh = new THREE.Mesh(geo, mat); mesh.renderOrder = order; mesh.frustumCulled = false; scene.add(mesh);
-      return { mesh: mesh, update: function (wpp) {
-        var hw = widthPx * wpp / 2, lift = 0.03 + liftPx * wpp;
-        for (var k = 0; k < nPts; k++) {
-          var lon = P[k * 4], lat = P[k * 4 + 1], ox = P[k * 4 + 2] * hw, oz = P[k * 4 + 3] * hw;
-          var x = lonToX(lon), z = latToZ(lat);
-          var l1 = lon + ox / KX, a1 = lat - oz / KZ, l2 = lon - ox / KX, a2 = lat + oz / KZ;
-          var yc = heightAt(lon, lat);
-          pos[k * 6] = x + ox; pos[k * 6 + 1] = yOf(Math.max(0, heightAt(l1, a1), yc)) + lift; pos[k * 6 + 2] = z + oz;
-          pos[k * 6 + 3] = x - ox; pos[k * 6 + 4] = yOf(Math.max(0, heightAt(l2, a2), yc)) + lift; pos[k * 6 + 5] = z - oz;
-        }
-        geo.attributes.position.needsUpdate = true;
-      } };
+    return { nPts: nPts, P: P, dist: dist, idx: idx, starts: starts, counts: dl.map(function (l) { return l.length; }) };
+  }
+  // a draped ribbon whose width is set in screen pixels; colors (per centre point, rgb) are optional
+  function ribbonMesh(R, widthPx, mat, liftPx, order, colors) {
+    var nPts = R.nPts, P = R.P, pos = new Float32Array(nPts * 6), geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("aDist", new THREE.BufferAttribute(R.dist, 1));
+    if (colors) {
+      var c2 = new Float32Array(nPts * 6);
+      for (var k = 0; k < nPts; k++) for (var c = 0; c < 3; c++) c2[k * 6 + c] = c2[k * 6 + 3 + c] = colors[k * 3 + c];
+      geo.setAttribute("color", new THREE.BufferAttribute(c2, 3));
     }
-    var haloMat = new THREE.MeshBasicMaterial({ color: haloColor, transparent: true, opacity: haloOpacity, depthWrite: false, side: THREE.DoubleSide,
-      polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
-    var coreMat = new THREE.MeshBasicMaterial({ color: coreColor, transparent: true, depthWrite: false, side: THREE.DoubleSide,
-      polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 });
-    var uDash = { value: 1 };
-    coreMat.onBeforeCompile = function (sh) {
+    geo.setIndex(R.idx);
+    var mesh = new THREE.Mesh(geo, mat); mesh.renderOrder = order; mesh.frustumCulled = false; scene.add(mesh);
+    return { mesh: mesh, update: function (wpp) {
+      var hw = widthPx * wpp / 2, lift = 0.03 + liftPx * wpp;
+      for (var k = 0; k < nPts; k++) {
+        var lon = P[k * 4], lat = P[k * 4 + 1], ox = P[k * 4 + 2] * hw, oz = P[k * 4 + 3] * hw;
+        var x = lonToX(lon), z = latToZ(lat);
+        var l1 = lon + ox / KX, a1 = lat - oz / KZ, l2 = lon - ox / KX, a2 = lat + oz / KZ;
+        var yc = heightAt(lon, lat);
+        pos[k * 6] = x + ox; pos[k * 6 + 1] = yOf(Math.max(0, heightAt(l1, a1), yc)) + lift; pos[k * 6 + 2] = z + oz;
+        pos[k * 6 + 3] = x - ox; pos[k * 6 + 4] = yOf(Math.max(0, heightAt(l2, a2), yc)) + lift; pos[k * 6 + 5] = z - oz;
+      }
+      geo.attributes.position.needsUpdate = true;
+    } };
+  }
+  // dash pattern along the ribbon (dash length in world units = uDash.value); pattern: "dashdot" or "dash"
+  function dashed(mat, uDash, pattern) {
+    var cut = pattern === "dash" ? "t > 0.62" : "(t > 0.56 && t < 0.68) || t > 0.8";
+    mat.onBeforeCompile = function (sh) {
       sh.uniforms.uDash = uDash;
       sh.vertexShader = "attribute float aDist;\nvarying float vDist;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvDist = aDist;");
       sh.fragmentShader = "varying float vDist;\nuniform float uDash;\n" + sh.fragmentShader.replace("void main() {",
-        "void main() {\n float t = fract(vDist / uDash);\n if ((t > 0.56 && t < 0.68) || t > 0.8) discard;");
+        "void main() {\n float t = fract(vDist / uDash);\n if (" + cut + ") discard;");
     };
-    var halo = make(haloPx, haloMat, 1.5, 3), core = make(corePx, coreMat, 2.0, 4);
+    return mat;
+  }
+  function addBorderRibbons(list, layer, haloPx, corePx, haloColor, haloOpacity, coreColor, dashPx) {
+    var R = ribbonGeometry(flatLines(list), 0.012);
+    var haloMat = new THREE.MeshBasicMaterial({ color: haloColor, transparent: true, opacity: haloOpacity, depthWrite: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
+    var uDash = { value: 1 };
+    var coreMat = dashed(new THREE.MeshBasicMaterial({ color: coreColor, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 }), uDash, "dashdot");
+    var halo = ribbonMesh(R, haloPx, haloMat, 1.5, 3), core = ribbonMesh(R, corePx, coreMat, 2.0, 4);
     var rb = { layer: layer, meshes: [halo.mesh, core.mesh], update: function () {
       var wpp = worldPerPx(); uDash.value = dashPx * wpp;
       halo.update(wpp); core.update(wpp);
@@ -778,7 +904,26 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   // ---------- labels ----------
   var labelLayer = document.getElementById("labels");
   var labels = [];
-  var layerOn = { region: true, range: true, peak: true, water: true, city: true, country: true, nborder: true, border: true, prov: false, grid: true };
+  var layerOn = { region: true, range: true, peak: true, water: true, city: true, country: true, nborder: true, border: true, prov: false, grid: true,
+                  territory: true, ancient: true };
+  // layers tied to today's map, and layers drawn from the historical snapshot
+  var MODERN_LAYERS = { city: 1, country: 1, nborder: 1, border: 1, prov: 1 }, HIST_LAYERS = { territory: 1, ancient: 1 };
+  var hist = { on: true, year: 741, polities: [] };
+  function modernView() { return !hist.on || !hist.polities.length; }
+  function layerShown(k) {
+    if (!layerOn[k]) return false;
+    if (MODERN_LAYERS[k]) return modernView();
+    if (HIST_LAYERS[k]) return !modernView();
+    return true;
+  }
+  function applyLayers() {
+    drapes.forEach(function (d) { var on = layerShown(d.layer); d.meshes.forEach(function (m) { m.visible = on; }); });
+    histUniforms.uHistOn.value = layerShown("territory") ? 1 : 0;
+    document.querySelectorAll(".chip[data-mode]").forEach(function (b) { b.hidden = (b.dataset.mode === "hist") === modernView(); });
+    document.getElementById("elevLegend").hidden = !modernView(); polLegend.hidden = modernView();
+    if (histTone === modernView()) { histTone = !modernView(); recolorBase(); updatePatchGeometry(true); }
+    dirty = true;
+  }
   function mkLabel(type, text, lon, lat, o) {
     o = o || {};
     var el = document.createElement("div");
@@ -943,7 +1088,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     var camD = camera.position.distanceTo(controls.target);
     for (var i = 0; i < labels.length; i++) {
       var L = labels[i];
-      if (!layerOn[L.layer] || camD > L.maxD) { if (L.shown) { L.el.style.transform = "translate(-9999px,-9999px)"; L.shown = false; } continue; }
+      if (L.off || !layerShown(L.layer) || camD > L.maxD) { if (L.shown) { L.el.style.transform = "translate(-9999px,-9999px)"; L.shown = false; } continue; }
       tmpV.set(L.x, L.onBase ? BASE_Y : L.y, L.z).project(camera);
       if (tmpV.z > 1 || tmpV.z < -1) L.sx = null; else { L.sx = (tmpV.x + 1) / 2 * W; L.sy = (1 - tmpV.y) / 2 * Hh; }
       vis.push(L);
@@ -957,9 +1102,15 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
         var ax = L.anchorLeft ? 6 : L.w / 2;
         var r = { x: L.sx - ax - 3, y: L.sy - L.h / 2 - 2, w: L.w + 6, h: L.h + 4 };
         if (L.type === "peak") r.y = L.sy - L.h + 4;
-        for (var k = 0; k < placed.length && ok; k++) {
-          var p = placed[k];
-          if (r.x < p.x + p.w && r.x + r.w > p.x && r.y < p.y + p.h && r.y + r.h > p.y) ok = false;
+        // polity names are big and only roughly placed: let them step a line up or down to make room
+        var tries = L.type === "polity" ? [0, -1.2, 1.2] : [0], y0 = r.y;
+        for (var t = 0; t < tries.length; t++) {
+          r.y = y0 + tries[t] * L.h; ok = true;
+          for (var k = 0; k < placed.length && ok; k++) {
+            var p = placed[k];
+            if (r.x < p.x + p.w && r.x + r.w > p.x && r.y < p.y + p.h && r.y + r.h > p.y) ok = false;
+          }
+          if (ok) break;
         }
         if (ok) { placed.push(r); L.el.style.transform = "translate(" + (r.x + 3).toFixed(1) + "px," + (r.y + 2).toFixed(1) + "px)"; L.shown = true; }
       }
@@ -991,11 +1142,31 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     return null;
   }
   var readout = document.getElementById("readout");
-  function showReadout(hit) {
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  // a historical city label within reach of the pointer, if any
+  function settlementNear(cx, cy) {
+    if (modernView() || !layerShown("ancient") || cx == null) return null;
+    var best = null, bd = 16;
+    settleLabels.forEach(function (L) {
+      if (!L.shown) return;
+      var d = Math.hypot(L.sx - cx, L.sy - cy);
+      if (d < bd) { bd = d; best = L; }
+    });
+    return best;
+  }
+  function showReadout(hit, cx, cy) {
+    var sL = settlementNear(cx, cy);
+    if (sL) {
+      var s = sL.s;
+      readout.innerHTML = "<b>" + esc(s[0]) + "</b>" + (s[1] && s[1] !== s[0] ? "（今" + esc(s[1]) + "）" : "") +
+        (isCapital(s, hist.year) ? " · 都城" : "") + (s[8] ? " · " + esc(s[8]) : "");
+      readout.hidden = false; return;
+    }
     if (!hit) { readout.hidden = true; return; }
     var e = heightAt(hit.lon, hit.lat), ni = nearestIdx(hit.lon, hit.lat);
     var reg = ni >= 0 ? REGION[ni] : 0, isW = ni >= 0 && WATER[ni];
     var name = reg ? DATA.names[reg] : "";
+    if (!modernView()) { var pol = polityAt(hit.lon, hit.lat); name = (pol ? pol[1] : "") + (name ? (pol ? "（今" + name + "）" : "今" + name) : ""); }
     var eTxt = Math.abs(e) < 1000 ? Math.round(e / 10) * 10 : Math.round(e / 50) * 50;
     readout.innerHTML = (name ? "<b>" + name + "</b> · " : "") + '<span class="num">' + hit.lat.toFixed(2) + "°N " + hit.lon.toFixed(2) + "°E</span> · " +
       (isW ? "湖面约 " : "海拔约 ") + '<span class="num">' + eTxt.toLocaleString("zh-CN") + "</span> 米";
@@ -1006,14 +1177,14 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   var cvs = renderer.domElement, downAt = null;
   cvs.addEventListener("pointerdown", function (ev) { downAt = [ev.clientX, ev.clientY, performance.now()]; stopSpin(); });
   cvs.addEventListener("pointerup", function (ev) {
-    if (downAt && Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) < 6 && performance.now() - downAt[2] < 500 && H) showReadout(pick(ev.clientX, ev.clientY));
+    if (downAt && Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) < 6 && performance.now() - downAt[2] < 500 && H) showReadout(pick(ev.clientX, ev.clientY), ev.clientX, ev.clientY);
     downAt = null;
   });
   var hoverPending = false;
   cvs.addEventListener("pointermove", function (ev) {
     if (ev.pointerType !== "mouse" || ev.buttons || hoverPending || !H) return;
     hoverPending = true;
-    requestAnimationFrame(function () { hoverPending = false; showReadout(pick(ev.clientX, ev.clientY)); });
+    requestAnimationFrame(function () { hoverPending = false; showReadout(pick(ev.clientX, ev.clientY), ev.clientX, ev.clientY); });
   });
   cvs.addEventListener("pointerleave", function () { readout.hidden = true; });
 
@@ -1066,6 +1237,21 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   document.getElementById("zin").addEventListener("click", function () { stopSpin(); zoomAt(window.innerWidth / 2, window.innerHeight / 2, 0.6); });
   document.getElementById("zout").addEventListener("click", function () { stopSpin(); zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1 / 0.6); });
 
+  // glide the view target to a place, keeping the current distance and angle
+  var fly = null;
+  function flyTo(lon, lat) {
+    stopSpin();
+    fly = { t0: controls.target.clone(), t1: new THREE.Vector3(lonToX(lon), 0, latToZ(lat)), off: camera.position.clone().sub(controls.target), start: performance.now() };
+  }
+  function stepFly(now) {
+    if (!fly) return;
+    var f = Math.min(1, (now - fly.start) / 700), e = f * f * (3 - 2 * f);
+    controls.target.lerpVectors(fly.t0, fly.t1, e); camera.position.copy(controls.target).add(fly.off);
+    lastMove = now; dirty = true;
+    if (f >= 1) fly = null;
+  }
+  cvs.addEventListener("pointerdown", function () { fly = null; });
+
   var HALF_W_CN = 31.25 * KX, HALF_D_CN = 18.25 * KZ;
   function homeView() {
     var aspect = camera.aspect, vf = camera.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * aspect);
@@ -1075,6 +1261,273 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     controls.target.set(portrait ? 5 : 0, 0, portrait ? 30 : 18);
     camera.position.set(0, Math.cos(pol) * dist, Math.sin(pol) * dist + controls.target.z);
     controls.update(); lastMove = performance.now(); dirty = true;
+  }
+
+  // ---------- historical atlas: eras, phases, polities (data: jiangshan-map, GPL-3.0) ----------
+  var HIST = JSON.parse(document.getElementById("history-data").textContent);
+  var SHAPES = [];   // per outline: polygons -> rings -> Float32Array [lon, lat, ...]
+  var PHASES = [];   // flat list over all eras: { from, to, snap, note, era }
+  HIST.eras.forEach(function (e, ei) { e.ph.forEach(function (p) { PHASES.push({ from: p[0], to: p[1], snap: p[2], note: p[3], era: ei }); }); });
+  var MIN_Y = PHASES[0].from, MAX_Y = PHASES[PHASES.length - 1].to;
+  function decodeShapes(buf) {
+    var s = new Int16Array(buf), i = 0, q = HIST.q;
+    while (i < s.length) {
+      var np = s[i++], polys = [];
+      for (var p = 0; p < np; p++) {
+        var nr = s[i++], rings = [];
+        for (var r = 0; r < nr; r++) {
+          var n = s[i++], x = s[i++], y = s[i++], ring = new Float32Array(n * 2);
+          ring[0] = x / q; ring[1] = y / q;
+          for (var k = 1; k < n; k++) { x += s[i++]; y += s[i++]; ring[k * 2] = x / q; ring[k * 2 + 1] = y / q; }
+          rings.push(ring);
+        }
+        polys.push(rings);
+      }
+      SHAPES.push(polys);
+    }
+  }
+  function inRings(rings, lon, lat) { // even-odd over all rings of one polygon
+    var inside = false;
+    for (var q = 0; q < rings.length; q++) {
+      var r = rings[q];
+      for (var i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+        var yi = r[i + 1], yj = r[j + 1];
+        if ((yi > lat) !== (yj > lat) && lon < (r[j] - r[i]) * (lat - yi) / (yj - yi) + r[i]) inside = !inside;
+      }
+    }
+    return inside;
+  }
+  // topmost polity under a point; polities are drawn by role (neighbour < main < rival < protectorate)
+  function polityAt(lon, lat) {
+    var best = null;
+    hist.polities.forEach(function (p) {
+      if (best && best[2] > p[2]) return;
+      if (SHAPES[p[0]].some(function (rings) { return inRings(rings, lon, lat); })) best = p;
+    });
+    return best;
+  }
+
+  var histCtx, histTex, HW, HH;
+  var ROLE_ALPHA = [0.16, 0.42, 0.38, 0.28], NEIGHBOUR_FILL = "#a87a4c";
+  function initHistTexture() {
+    HW = Math.min(isTouch ? 2048 : 4096, renderer.capabilities.maxTextureSize);
+    HH = Math.round(HW * (ZMAX - ZMIN) / (XMAX - XMIN));
+    var cv = document.createElement("canvas"); cv.width = HW; cv.height = HH;
+    histCtx = cv.getContext("2d");
+    histTex = new THREE.CanvasTexture(cv);
+    histTex.flipY = false; histTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    histUniforms.uHist.value = histTex;
+    histUniforms.uHistBox.value.set(XMIN, ZMIN, XMAX - XMIN, ZMAX - ZMIN);
+  }
+  function tracePolygon(c, rings, sx, sy) {
+    c.beginPath();
+    rings.forEach(function (r) {
+      for (var k = 0; k < r.length; k += 2) { var x = (r[k] - LON0) * sx, y = (LAT1 - r[k + 1]) * sy; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
+      c.closePath();
+    });
+  }
+  // Fills are opaque, pre-mixed towards white by the role's strength: the shader multiplies the terrain by
+  // this colour, so the topmost polity wins cleanly where outlines overlap.
+  var fillC = new THREE.Color();
+  function drawTerritory() {
+    var t0 = performance.now(), c = histCtx, sx = HW / (LON1 - LON0), sy = HH / (LAT1 - LAT0);
+    c.globalCompositeOperation = "source-over";
+    c.clearRect(0, 0, HW, HH);
+    hist.polities.slice().sort(function (a, b) { return a[2] - b[2]; }).forEach(function (p) {
+      var a = ROLE_ALPHA[p[2]];
+      fillC.set(p[2] === 0 || !p[3] ? NEIGHBOUR_FILL : p[3]);
+      c.fillStyle = "rgb(" + [fillC.r, fillC.g, fillC.b].map(function (v) { return Math.round((1 - a + a * v) * 255); }).join(",") + ")";
+      SHAPES[p[0]].forEach(function (rings) { tracePolygon(c, rings, sx, sy); c.fill("evenodd"); });
+    });
+    // grow the fills ~10 km into uncovered pixels only, so coastlines that differ from the terrain's still get tinted
+    c.globalCompositeOperation = "destination-over";
+    var k = Math.max(1, Math.round(HW / 1600));
+    [k, 2 * k].forEach(function (d) {
+      [[d, 0], [-d, 0], [0, d], [0, -d], [d, d], [-d, d], [d, -d], [-d, -d]].forEach(function (o) { c.drawImage(c.canvas, o[0], o[1]); });
+    });
+    c.globalCompositeOperation = "source-over";
+    histTex.needsUpdate = true; dirty = true;
+    window.__drawMs = performance.now() - t0;
+  }
+  function removeDrape(d) {
+    d.meshes.forEach(function (m) { scene.remove(m); m.geometry.dispose(); });
+    drapes.splice(drapes.indexOf(d), 1);
+    if (ribbons.indexOf(d) >= 0) ribbons.splice(ribbons.indexOf(d), 1);
+  }
+  // borders: main & rival solid, protectorates dashed; each in a darkened shade of the polity's tint
+  var BORDER_PX = [0, 2.4, 1.9, 1.7], polityBorder = null, borderMats = [], borderDash = { value: 1 };
+  function buildPolityBorders() {
+    if (polityBorder) { removeDrape(polityBorder); polityBorder = null; }
+    var groups = [[], [], [], []], tmpC = new THREE.Color();
+    hist.polities.forEach(function (p) {
+      if (!p[2] || !p[3]) return;
+      tmpC.set(p[3]).multiplyScalar(0.62);
+      SHAPES[p[0]].forEach(function (rings) { rings.forEach(function (r) {
+        var line = [];
+        for (var k = 0; k < r.length; k += 2) line.push([r[k], r[k + 1]]);
+        line.push(line[0]);
+        groups[p[2]].push({ line: line, rgb: [tmpC.r, tmpC.g, tmpC.b] });
+      }); });
+    });
+    var parts = [];
+    for (var role = 1; role <= 3; role++) {
+      var g = groups[role];
+      if (!g.length) continue;
+      var R = ribbonGeometry(g.map(function (e) { return e.line; }), 0.03), cols = new Float32Array(R.nPts * 3);
+      g.forEach(function (e, li) { for (var k = R.starts[li], n = k + R.counts[li]; k < n; k++) cols.set(e.rgb, k * 3); });
+      if (!borderMats[role]) {
+        borderMats[role] = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.92, depthWrite: false, side: THREE.DoubleSide,
+          polygonOffset: true, polygonOffsetFactor: -7, polygonOffsetUnits: -7 });
+        if (role === 3) dashed(borderMats[role], borderDash, "dash");
+      }
+      parts.push(ribbonMesh(R, BORDER_PX[role], borderMats[role], 1.2 + role * 0.2, 3, cols));
+    }
+    polityBorder = { layer: "territory", meshes: parts.map(function (q) { return q.mesh; }), update: function () {
+      var wpp = worldPerPx(); borderDash.value = 10 * wpp;
+      parts.forEach(function (q) { q.update(wpp); });
+    } };
+    ribbons.push(polityBorder); drapes.push(polityBorder);
+    polityBorder.update();
+  }
+  // polity names at their anchors; neighbours rank below the terrain labels
+  var ROLE_CLS = ["neighbor", "main", "rival", "protectorate"], ROLE_PRIO = [2.5, 30, 22, 14], polityLabels = [];
+  function buildPolityLabels() {
+    polityLabels.forEach(function (L) { L.el.remove(); labels.splice(labels.indexOf(L), 1); });
+    polityLabels = [];
+    hist.polities.forEach(function (p) {
+      if (p[4] == null || p[4] < LON0 || p[4] > LON1 || p[5] < LAT0 || p[5] > LAT1) return;
+      var L = mkLabel("polity", p[1], p[4], p[5], { cls: ROLE_CLS[p[2]], prio: ROLE_PRIO[p[2]], lift: 1.0, layer: "territory" });
+      L.y = yOf(Math.max(0, heightAt(L.lon, L.lat))) + L.lift;
+      labels.push(L); polityLabels.push(L);
+    });
+  }
+  // settlements of every era, made once and switched on by year; capitals rank above every other label
+  var settleLabels = [];
+  function isCapital(s, y) { return !!s[7] && s[7].some(function (p) { return y >= p[0] && y <= p[1]; }); }
+  function buildSettlements() {
+    HIST.settlements.forEach(function (s) {
+      var L = mkLabel("city", esc(s[0]), s[2], s[3], { layer: "ancient", lift: 0.15, cls: "anc" + (s[6] === 2 ? " minor" : "") });
+      L.s = s; L.off = true; L.cap = false;
+      labels.push(L); settleLabels.push(L);
+    });
+  }
+  function updateSettlements(y) {
+    settleLabels.forEach(function (L) {
+      var s = L.s, cap = isCapital(s, y);
+      L.off = y < s[4] || y > s[5];
+      if (cap !== L.cap || !L.prio) {
+        L.cap = cap; L.el.classList.toggle("cap", cap); L.w = 0;
+        L.prio = cap ? 40 : s[6] === 2 ? 1 : 2.2;
+        L.maxD = cap ? 1e9 : s[6] === 2 ? 200 : 520;
+      }
+    });
+    dirty = true;
+  }
+  var polLegend = document.getElementById("polLegend");
+  function buildPolityLegend() {
+    polLegend.innerHTML = "";
+    hist.polities.filter(function (p) { return p[2] > 0; }).sort(function (a, b) { return (a[2] === 1 ? 0 : 1) - (b[2] === 1 ? 0 : 1); }).forEach(function (p) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "pl" + (p[2] === 3 ? " protectorate" : "");
+      b.innerHTML = '<span class="sw"></span>';
+      b.firstChild.style.setProperty("--c", p[3]);
+      b.appendChild(document.createTextNode(p[1]));
+      if (p[4] != null) b.addEventListener("click", function () { flyTo(p[4], p[5]); });
+      polLegend.appendChild(b);
+    });
+  }
+
+  // ---------- timeline ----------
+  var tlEl = document.getElementById("timeline"), yearIn = document.getElementById("tlYearIn");
+  var tlEra = document.getElementById("tlEra"), tlYear = document.getElementById("tlYear"), tlSeat = document.getElementById("tlSeat"), tlNote = document.getElementById("tlNote");
+  var histBtn = document.getElementById("histBtn"), playBtn = document.getElementById("tlPlay");
+  var curPhase = -1, bandEls = [];
+  function phaseAt(y) {
+    for (var i = 0; i < PHASES.length; i++) if (y >= PHASES[i].from && y <= PHASES[i].to) return i;
+    return y < MIN_Y ? 0 : PHASES.length - 1;
+  }
+  function yearText(y) { return y < 0 ? "前 " + (-y) + " 年" : "公元 " + y + " 年"; }
+  function setYear(y, fromSlider) {
+    y = Math.max(MIN_Y, Math.min(MAX_Y, Math.round(y)));
+    if (y === 0) y = hist.year < 0 ? 1 : -1;   // there is no year 0
+    hist.year = y;
+    var pi = phaseAt(y), ph = PHASES[pi], era = HIST.eras[ph.era];
+    if (pi !== curPhase) {
+      curPhase = pi;
+      var snap = HIST.snaps[ph.snap];
+      hist.polities = snap.pol;
+      if (snap.pol.length) drawTerritory();
+      buildPolityBorders(); buildPolityLabels(); buildPolityLegend();
+      bandEls.forEach(function (b, i) { b.classList.toggle("cur", i === ph.era); });
+      tlEra.textContent = era.title;
+      tlSeat.textContent = era.seat ? "都城 " + era.seat : "";
+      tlNote.textContent = ph.note || snap.cap || (snap.pol.length ? "" : "今日行政区划与国界");
+      applyLayers();
+    }
+    tlYear.textContent = yearText(y);
+    updateSettlements(y);
+    if (!fromSlider) yearIn.value = y;
+    scheduleUrl();
+  }
+  function stepPhase(dir) {
+    var pi = phaseAt(hist.year), ph = PHASES[pi];
+    if (dir < 0) setYear(hist.year > ph.from ? ph.from : PHASES[Math.max(0, pi - 1)].from);
+    else if (pi < PHASES.length - 1) setYear(PHASES[pi + 1].from);
+    return pi < PHASES.length - 1;
+  }
+  var playTimer = 0;
+  function stopPlay() { if (playTimer) { clearInterval(playTimer); playTimer = 0; } playBtn.textContent = "▶"; playBtn.setAttribute("aria-pressed", "false"); }
+  playBtn.addEventListener("click", function () {
+    if (playTimer) { stopPlay(); return; }
+    if (phaseAt(hist.year) === PHASES.length - 1) setYear(MIN_Y);
+    playBtn.textContent = "❚❚"; playBtn.setAttribute("aria-pressed", "true");
+    playTimer = setInterval(function () { if (!stepPhase(1)) stopPlay(); }, 1600);
+  });
+  document.getElementById("tlPrev").addEventListener("click", function () { stopPlay(); stepPhase(-1); });
+  document.getElementById("tlNext").addEventListener("click", function () { stopPlay(); stepPhase(1); });
+  yearIn.addEventListener("input", function () { stopPlay(); setYear(+yearIn.value, true); });
+  function buildTimeline() {
+    var bands = document.getElementById("tlBands"), span = MAX_Y - MIN_Y + 1;
+    yearIn.min = MIN_Y; yearIn.max = MAX_Y;
+    HIST.eras.forEach(function (e) {
+      var b = document.createElement("div"), w = (e.to - e.from + 1) / span * 100;
+      b.className = "tl-band"; b.title = e.title + "（" + yearText(e.from) + " — " + yearText(e.to) + "）";
+      b.style.left = (e.from - MIN_Y) / span * 100 + "%"; b.style.width = w + "%"; b.style.background = e.tint || "#888";
+      b.textContent = e.badge || e.title;
+      b.addEventListener("click", function () { stopPlay(); setYear(e.focus); });
+      bands.appendChild(b); bandEls.push(b);
+    });
+  }
+  function fitBands() { // hide era names that do not fit their band
+    bandEls.forEach(function (b) { b.style.color = ""; if (b.scrollWidth > b.clientWidth + 1) b.style.color = "transparent"; });
+  }
+  window.addEventListener("resize", function () { if (hist.on) fitBands(); });
+  function setHist(on) {
+    hist.on = on;
+    histBtn.setAttribute("aria-pressed", String(on));
+    tlEl.hidden = !on; document.body.classList.toggle("hist", on);
+    if (on) fitBands();
+    if (!on) stopPlay();
+    applyLayers(); scheduleUrl();
+  }
+  histBtn.addEventListener("click", function () { setHist(!hist.on); });
+  var urlTimer = 0;
+  function scheduleUrl() {
+    clearTimeout(urlTimer);
+    urlTimer = setTimeout(function () {
+      try {
+        var u = new URL(location.href);
+        if (hist.on) { u.searchParams.set("year", hist.year); u.searchParams.delete("mode"); }
+        else { u.searchParams.delete("year"); u.searchParams.set("mode", "modern"); }
+        history.replaceState(null, "", u);
+      } catch (e) { /* file:// or sandboxed frames */ }
+    }, 400);
+  }
+  function initHistory() {
+    var q = new URLSearchParams(location.search), y = parseInt(q.get("year"), 10);
+    buildTimeline(); buildSettlements();
+    setYear(isFinite(y) ? y : hist.year);
+    setHist(q.get("mode") !== "modern");
   }
 
   // ---------- UI ----------
@@ -1088,8 +1541,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     b.addEventListener("click", function () {
       var k = b.dataset.layer, on = b.getAttribute("aria-pressed") !== "true";
       b.setAttribute("aria-pressed", String(on)); layerOn[k] = on;
-      drapes.forEach(function (d) { if (d.layer === k) d.meshes.forEach(function (m) { m.visible = on; }); });
-      dirty = true;
+      applyLayers();
     });
   });
   var exagIn = document.getElementById("exag"), exagOut = document.getElementById("exagOut"), exagPending = false;
@@ -1113,6 +1565,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
   function loop() {
     requestAnimationFrame(loop);
+    stepFly(performance.now());
     var moved = controls.update();
     clampTarget();
     var now = performance.now();
@@ -1123,7 +1576,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
   // ---------- boot ----------
   resize();
-  Promise.all([unpack(DATA.h), unpack(DATA.region), unpack(DATA.relief)]).then(function (res) {
+  Promise.all([unpack(DATA.h), unpack(DATA.region), unpack(DATA.relief), unpack(HIST.shapes)]).then(function (res) {
     var u16 = new Uint16Array(res[0]);
     H = new Float32Array(NX * NY); WATER = new Uint8Array(NX * NY);
     for (var k = 0; k < u16.length; k++) { var v = u16[k]; WATER[k] = v & 0x8000 ? 1 : 0; H[k] = (v & 0x7fff) - 500; }
@@ -1136,6 +1589,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     addBorderRibbons(DATA.cnborder, "nborder", 11, 3, 0xee8fb0, 0.6, 0x5c1238, 24);
     buildLabels();
     addGraticule();
+    decodeShapes(res[3]); initHistTexture(); initHistory();
     themeColors();
     applyExaggeration();
     homeView();
@@ -1153,5 +1607,6 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     camera.position.set(t.x + Math.sin(pol) * Math.sin(az) * dist, Math.cos(pol) * dist, t.z + Math.sin(pol) * Math.cos(az) * dist);
     controls.update(); lastMove = 0; lastPatchCheck = 0; maybeUpdatePatch(performance.now() + 1000); dirty = true;
   };
+  window.__year = function (y) { if (y == null) { setHist(false); return; } setHist(true); setYear(y); };
 })();
 </script>
