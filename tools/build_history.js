@@ -3,7 +3,9 @@
 //
 // Output: eras with their phases (year ranges -> snapshot), one entry per snapshot listing
 // its polities, the deduplicated polity outlines (simplified to ~1 km, quantised to 0.01 deg,
-// delta-coded Int16, gzip + base64), and the settlements with the years they are shown.
+// delta-coded Int16, gzip + base64), the settlements with the years they are shown, and the
+// river courses, lakes and water labels that existed only in some years (e.g. the Yellow River's
+// former courses, Yunmeng and Juye marshes).
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -16,11 +18,12 @@ const OUT = path.resolve(process.argv[2] || path.join(ROOT, 'build', 'history.js
 
 const ctx = { window: {} };
 vm.createContext(ctx);
-for (const f of ['map_data.js', 'atlas_snapshots.js']) {
+for (const f of ['map_data.js', 'china_geo_data.js', 'atlas_snapshots.js']) {
   vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f });
 }
 const DYN = ctx.window.DYNASTY_DATA;
 const SNAP = ctx.window.ATLAS_SNAPSHOTS;
+const HYDRO = ctx.window.HYDRO_DATA;
 
 const Q = 100;        // quantisation: 0.01 deg
 const EPS = 0.01;     // simplification tolerance, deg
@@ -135,11 +138,41 @@ DYN.forEach((d, di) => {
   }
 });
 
+// ---------- time-bound hydrography ----------
+// Only features with an appear/vanish year: the rest is today's water, which the terrain already has.
+// The modern Yellow River (appear 1855, open-ended) is skipped too: the page draws its own, valley-snapped.
+const OPEN0 = -9999, OPEN1 = 9999;
+const span = (f) => [f.appear != null ? f.appear : OPEN0, f.vanish != null ? f.vanish - 1 : OPEN1];
+const timed = (f) => f.appear != null || f.vanish != null;
+const r2 = (v) => Math.round(v * 100) / 100;
+function chaikin(line, rounds) { // smooth the coarse hand-drawn courses, keeping the end points
+  for (let k = 0; k < rounds; k++) {
+    const out = [line[0]];
+    for (let i = 0; i < line.length - 1; i++) {
+      const a = line[i], b = line[i + 1];
+      out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    out.push(line[line.length - 1]);
+    line = out;
+  }
+  return line;
+}
+const ZH_RIVER = { Huang: '黄河', Huai: '淮河', Ji: '济水', Si: '泗水', Feihuang: '废黄河' };
+// [name, rank, from, to, lines]
+const hydroRivers = HYDRO.rivers.filter(timed).filter((r) => !(r.name === 'Huang' && r.appear >= 1855 && r.vanish == null))
+  .map((r) => [ZH_RIVER[r.name] || r.name, r.rank, ...span(r), r.lines.map((l) => chaikin(l, 3).map((p) => [r2(p[0]), r2(p[1])]))]);
+// [name, from, to, rings]
+const hydroLakes = HYDRO.lakes.filter(timed).map((l) => [l.name, ...span(l), l.rings.map((r) => r.map((p) => [r2(p[0]), r2(p[1])]))]);
+// [text, lon, lat, kind, from, to]; labels still valid today (Yellow River, Hongze) are the page's own
+const hydroLabels = HYDRO.labels.filter((l) => l.vanish != null)
+  .map((l) => [l.zh.replace(/\s+/g, ''), l.coord[0], l.coord[1], l.kind, ...span(l)]);
+
 // ---------- pack ----------
 for (const v of stream) if (v < -32768 || v > 32767) throw new Error(`value out of Int16 range: ${v}`);
 const i16 = Int16Array.from(stream);
 const packed = zlib.gzipSync(Buffer.from(i16.buffer), { level: 9 }).toString('base64');
-const bundle = { q: Q, roles: ROLES, eras, snaps, nshapes: shapeIndex.size, shapes: packed, settlements };
+const bundle = { q: Q, roles: ROLES, eras, snaps, nshapes: shapeIndex.size, shapes: packed, settlements,
+  hydro: { rivers: hydroRivers, lakes: hydroLakes, labels: hydroLabels } };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 const json = JSON.stringify(bundle);
 fs.writeFileSync(OUT, json);
@@ -149,4 +182,5 @@ for (let i = 0; i < stream.length; ) { // count points for the log
   for (let p = 0; p < np; p++) { const nr = stream[i++]; for (let r = 0; r < nr; r++) { const n = stream[i++]; pts += n; i += n * 2; } }
 }
 console.log(`eras ${eras.length}, snapshots ${snaps.length}, shapes ${shapeIndex.size} (${pts} points), settlements ${settlements.length}`);
+console.log(`hydro: ${hydroRivers.length} river courses, ${hydroLakes.length} lakes, ${hydroLabels.length} labels`);
 console.log(`wrote ${path.relative(ROOT, OUT)} (${(json.length / 1e3).toFixed(0)} kB, outlines ${(packed.length / 1e3).toFixed(0)} kB)`);

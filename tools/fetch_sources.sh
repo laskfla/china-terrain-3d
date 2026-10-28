@@ -18,10 +18,10 @@ clone https://github.com/turban/webgl-earth webgl-earth "" /images/elev_bump_4k.
 clone https://github.com/apache/echarts echarts 4.9.0 /map/js/china.js /map/js/world.js
 # three.js r147 (only needed for tools/screenshot.js offline rendering)
 clone https://github.com/mrdoob/three.js three r147 /build/three.min.js /examples/js/controls/OrbitControls.js
-# jiangshan-map (GPL-3.0): historical polities, eras and settlements, pinned to a commit
+# jiangshan-map (GPL-3.0): historical polities, eras, settlements, river courses and lakes, pinned to a commit
 if [ -d jiangshan-map/.git ]; then echo "skip jiangshan-map (exists)"; else
   git clone --filter=blob:none --sparse --no-checkout https://github.com/DeanChensj/jiangshan-map jiangshan-map
-  (cd jiangshan-map && git sparse-checkout set --no-cone /js/map_data.js /js/atlas_snapshots.js /LICENSE \
+  (cd jiangshan-map && git sparse-checkout set --no-cone /js/map_data.js /js/atlas_snapshots.js /js/china_geo_data.js /LICENSE \
     && git checkout -q b66b846b61fd27c4fa728769900f0913bfc7f811)
 fi
 
