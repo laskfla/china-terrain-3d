@@ -1,0 +1,1157 @@
+<title>中国三维地形</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: full-bleed 3D relief model on an atlas-plate ground; title top-left, view buttons top-right, zoom buttons right edge, layer & scale tray along the bottom. */
+:root {
+  --ground: #dde4e3;
+  --ground-2: #cfd8d7;
+  --ink: #1f2b2c;
+  --muted: #5d6c6b;
+  --panel: rgba(246, 249, 248, 0.88);
+  --panel-line: rgba(31, 43, 44, 0.12);
+  --accent: #2c6e7f;
+  --accent-ink: #ffffff;
+  --sea-ink: #3c7187;
+  --grat: #9aaaa8;
+  --wall-bottom: #4a3a2f;
+  --font-display: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --font-body: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #10181a; --ground-2: #172124; --ink: #e2e9e8; --muted: #93a3a1;
+    --panel: rgba(20, 30, 32, 0.88); --panel-line: rgba(226, 233, 232, 0.12);
+    --accent: #6cb6c7; --accent-ink: #0d1719; --sea-ink: #8fc0d2; --grat: #3b4b4e; --wall-bottom: #1d1611;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #10181a; --ground-2: #172124; --ink: #e2e9e8; --muted: #93a3a1;
+  --panel: rgba(20, 30, 32, 0.88); --panel-line: rgba(226, 233, 232, 0.12);
+  --accent: #6cb6c7; --accent-ink: #0d1719; --sea-ink: #8fc0d2; --grat: #3b4b4e; --wall-bottom: #1d1611;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: radial-gradient(120% 90% at 50% 40%, var(--ground-2), var(--ground));
+  background-color: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+#labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+
+.lb { position: absolute; left: 0; top: 0; white-space: nowrap; will-change: transform; transform: translate(-9999px, -9999px); }
+.lb.region { font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: 0.32em; color: #fffdf6;
+  text-shadow: 0 0 3px rgba(40, 25, 10, 0.9), 0 1px 6px rgba(40, 25, 10, 0.6); }
+.lb.region.big { font-size: 19px; letter-spacing: 0.4em; }
+.lb.region.small { font-size: 13px; letter-spacing: 0.2em; }
+.lb.country { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: 0.3em; color: #1d2a44;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 1), 0 0 7px rgba(255, 255, 255, 0.85); }
+.lb.country.minor { font-size: 13.5px; letter-spacing: 0.2em; color: #3a465c; }
+.lb.range { font-family: var(--font-display); font-weight: 600; font-size: 12.5px; letter-spacing: 0.18em; color: #3a2414;
+  text-shadow: 0 0 3px rgba(255, 246, 228, 0.95), 0 0 6px rgba(255, 246, 228, 0.7); }
+.lb.peak { font-size: 12px; color: #2a1a10; font-weight: 600;
+  text-shadow: 0 0 3px rgba(255, 250, 240, 1), 0 0 6px rgba(255, 250, 240, 0.8); }
+.lb.peak .tri { color: #8b1d12; font-size: 10px; margin-right: 2px; }
+.lb.peak .h { font-family: var(--font-mono); font-weight: 500; font-size: 10.5px; margin-left: 3px; color: #5a3a24; }
+.lb.water { font-size: 12px; font-weight: 600; color: #0f4f86; letter-spacing: 0.1em;
+  text-shadow: 0 0 3px rgba(240, 250, 255, 1), 0 0 6px rgba(240, 250, 255, 0.8); }
+.lb.sea { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.5em; color: var(--sea-ink); opacity: 0.9; }
+.lb.isle { font-size: 11.5px; letter-spacing: 0.15em; color: var(--sea-ink); font-weight: 600; }
+.lb.prov { font-size: 11px; color: #ffffff; font-weight: 600; letter-spacing: 0.05em;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.85), 0 0 5px rgba(0, 0, 0, 0.5); }
+.lb.city { font-size: 11.5px; color: #1b1b1b; font-weight: 600;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 1), 0 0 6px rgba(255, 255, 255, 0.8); }
+.lb.city .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fff; border: 1.5px solid #222; margin-right: 4px; vertical-align: 0; }
+.lb.city.cap { font-weight: 700; }
+.lb.city.cap .dot { background: #c0392b; border-color: #fff; width: 7px; height: 7px; }
+.lb.grid { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+
+.hud { position: fixed; z-index: 5; }
+#head { top: 14px; left: max(16px, env(safe-area-inset-left, 0px)); max-width: min(60vw, 440px); pointer-events: none; }
+#head h1, #head p { text-shadow: 0 0 4px var(--ground), 0 0 10px var(--ground), 0 0 16px var(--ground); }
+#head h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: 0.18em; line-height: 1.2; text-wrap: balance; }
+#head p { margin: 4px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) { .hint-mouse { display: none; } .hint-touch { display: block; } }
+
+#viewbtns { top: 14px; right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
+.btn { appearance: none; border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  font: 600 12.5px var(--font-body); padding: 8px 12px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, .chip:focus-visible, input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn svg { width: 14px; height: 14px; }
+#zoombtns { right: max(16px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); display: grid; gap: 6px; }
+#zoombtns .btn { width: 38px; height: 38px; padding: 0; justify-content: center; font-size: 18px; line-height: 1; }
+
+#tray { left: 0; right: 0; bottom: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(14px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px; pointer-events: none; }
+.card { pointer-events: auto; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); padding: 10px 12px; min-width: 0; }
+.card h2 { margin: 0 0 7px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: var(--muted); }
+
+#legend { width: min(310px, 100%); }
+.ramp { height: 10px; border-radius: 3px; }
+.ticks { position: relative; height: 15px; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ticks span { position: absolute; top: 3px; transform: translateX(-50%); }
+.ticks span:first-child { transform: none; }
+.ticks span:last-child { transform: translateX(-100%); }
+.legend-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; margin-top: 4px; font-size: 10.5px; color: var(--muted); }
+.legend-foot .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+#note { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: 6px; max-width: 48ch; }
+
+#controls { display: grid; gap: 9px; width: min(440px, 100%); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { appearance: none; border: 1px solid var(--panel-line); background: transparent; color: var(--ink); cursor: pointer;
+  font: 600 12px var(--font-body); padding: 6px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; opacity: 0.55; }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"]::before { background: currentColor; opacity: 1; }
+.slider { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+.slider output { font-family: var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+
+#readout { left: 50%; transform: translateX(-50%); bottom: calc(176px + env(safe-area-inset-bottom, 0px)); pointer-events: none;
+  background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+#readout b { font-weight: 700; }
+#readout .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+#status { left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 13px; color: var(--muted); background: var(--panel);
+  border: 1px solid var(--panel-line); border-radius: 12px; padding: 10px 16px; }
+
+@media (max-width: 640px) {
+  #head h1 { font-size: 19px; }
+  #head p { font-size: 11px; }
+  #tray { flex-direction: column-reverse; align-items: stretch; }
+  #legend, #controls { width: 100%; }
+  #readout { bottom: calc(250px + env(safe-area-inset-bottom, 0px)); }
+  .lb.region { font-size: 13px; letter-spacing: 0.22em; }
+  .lb.region.big { font-size: 16px; }
+  .lb.country { font-size: 15px; }
+  .lb.range { font-size: 11px; }
+  #note { display: none; }
+  #zoombtns { top: auto; transform: none; bottom: calc(262px + env(safe-area-inset-bottom, 0px)); }
+}
+</style>
+
+<div id="stage" aria-label="可旋转缩放的中国及周边三维地形模型"></div>
+<div id="labels" aria-hidden="true"></div>
+
+<header id="head" class="hud">
+  <h1>中国三维地形</h1>
+  <p class="hint-mouse">左键拖动平移 · 滚轮在指针处缩放 · 双击放大 · 右键或 Shift+拖动旋转 · 点地形查海拔</p>
+  <p class="hint-touch">单指拖动平移 · 双指捏合在该处缩放 · 双指拖动旋转 · 轻点查海拔</p>
+</header>
+
+<div id="viewbtns" class="hud">
+  <button class="btn" id="spin" aria-pressed="false" type="button">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M12.4 1.6v2.8H9.6"/></svg>自动旋转</button>
+  <button class="btn" id="reset" type="button">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/></svg>复位</button>
+</div>
+<div id="zoombtns" class="hud">
+  <button class="btn" id="zin" type="button" aria-label="放大">+</button>
+  <button class="btn" id="zout" type="button" aria-label="缩小">−</button>
+</div>
+
+<div id="readout" class="hud" hidden></div>
+<div id="status" class="hud">正在构建地形…</div>
+
+<div id="tray" class="hud">
+  <div id="legend" class="card">
+    <h2>海拔（米）</h2>
+    <div class="ramp" id="ramp"></div>
+    <div class="ticks" id="ticks"></div>
+    <div class="legend-foot">
+      <span><span class="sw" style="background:#4f8fc0"></span>湖泊</span>
+      <span><span class="sw" style="background:#b9b6a6"></span>邻国（色调略淡）</span>
+      <span><span class="sw" style="background:linear-gradient(#ee8fb0,#ee8fb0) padding-box;border-top:2px dashed #5c1238;height:6px;border-radius:0"></span>国界</span>
+      <span>▲ 山峰 · 米</span>
+    </div>
+    <div id="note">高程来自 NASA 全球地形数据（约 9 公里网格），近看时的细部起伏按当地起伏度程序生成，仅作示意。省界、国界据 ECharts 地图数据。</div>
+  </div>
+  <div id="controls" class="card">
+    <div class="chips" role="group" aria-label="图层">
+      <button class="chip" type="button" data-layer="region" aria-pressed="true">地形区</button>
+      <button class="chip" type="button" data-layer="range" aria-pressed="true">山脉</button>
+      <button class="chip" type="button" data-layer="peak" aria-pressed="true">山峰</button>
+      <button class="chip" type="button" data-layer="water" aria-pressed="true">河湖海</button>
+      <button class="chip" type="button" data-layer="city" aria-pressed="true">城市</button>
+      <button class="chip" type="button" data-layer="country" aria-pressed="true">国名</button>
+      <button class="chip" type="button" data-layer="nborder" aria-pressed="true">国界</button>
+      <button class="chip" type="button" data-layer="border" aria-pressed="true">省界</button>
+      <button class="chip" type="button" data-layer="prov" aria-pressed="false">省名</button>
+    </div>
+    <label class="slider" for="exag">垂直夸张
+      <input type="range" id="exag" min="5" max="45" step="1" value="20">
+      <output id="exagOut" for="exag">×20</output>
+    </label>
+  </div>
+</div>
+
+<script id="terrain-data" type="application/json">__TERRAIN__</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  "use strict";
+  var statusEl = document.getElementById("status");
+  if (!window.THREE || !THREE.OrbitControls) { statusEl.textContent = "三维引擎未能加载，请刷新重试。"; return; }
+
+  var DATA = JSON.parse(document.getElementById("terrain-data").textContent);
+  var NX = DATA.nx, NY = DATA.ny, LON0 = DATA.lon0, LAT1 = DATA.lat1, RES = DATA.res, NPROV = DATA.nprov;
+  var LON1 = LON0 + (NX - 1) * RES, LAT0 = LAT1 - (NY - 1) * RES;
+  var LONC = 104.25, LATC = 35.75;                      // China's centre is the world origin
+  var KX = 111.32 * Math.cos(35 * Math.PI / 180) / 10;  // world units per degree lon (1 unit = 10 km)
+  var KZ = 111.32 / 10;
+  var BASE_Y = -3.2;
+  var exag = 20;
+  var isTouch = window.matchMedia("(pointer: coarse)").matches;
+
+  // ---------- hypsometric ramp (metres) ----------
+  var STOPS = [[0, "#4e9660"], [150, "#7fb766"], [400, "#c4d488"], [800, "#e6cf86"], [1500, "#dcae68"], [2500, "#c28450"],
+               [3500, "#a1633b"], [4300, "#8a5434"], [5000, "#7d5040"], [5600, "#a99a92"], [6200, "#ece8e3"], [9000, "#ffffff"]];
+  var STOP_RGB = STOPS.map(function (s) { var c = new THREE.Color(s[1]); return [s[0], c.r, c.g, c.b]; });
+  function ramp(e, out) {
+    if (e <= STOP_RGB[0][0]) { out[0] = STOP_RGB[0][1]; out[1] = STOP_RGB[0][2]; out[2] = STOP_RGB[0][3]; return; }
+    for (var k = 1; k < STOP_RGB.length; k++) {
+      var b = STOP_RGB[k];
+      if (e <= b[0]) { var a = STOP_RGB[k - 1], t = (e - a[0]) / (b[0] - a[0]);
+        out[0] = a[1] + (b[1] - a[1]) * t; out[1] = a[2] + (b[2] - a[2]) * t; out[2] = a[3] + (b[3] - a[3]) * t; return; }
+    }
+    var l = STOP_RGB[STOP_RGB.length - 1]; out[0] = l[1]; out[1] = l[2]; out[2] = l[3];
+  }
+  var WATER_C = new THREE.Color("#4f8fc0");
+  function colorFor(e, reg, isWater, slope, out) {
+    if (isWater) { out[0] = WATER_C.r; out[1] = WATER_C.g; out[2] = WATER_C.b; return; }
+    ramp(e, out);
+    if (slope) { var k = 1 - Math.min(0.22, slope * 0.22); out[0] *= k; out[1] *= k; out[2] *= k; }
+    if (reg > NPROV) { // neighbouring countries: slightly muted
+      var l = out[0] * 0.3 + out[1] * 0.55 + out[2] * 0.15;
+      out[0] = out[0] * 0.5 + l * 0.5 + 0.05; out[1] = out[1] * 0.5 + l * 0.5 + 0.045; out[2] = out[2] * 0.5 + l * 0.5 + 0.04;
+    }
+  }
+  (function legend() {
+    var lo = 0, hi = 6500, parts = [];
+    STOPS.forEach(function (s) { if (s[0] >= lo && s[0] <= hi) parts.push(s[1] + " " + ((s[0] - lo) / (hi - lo) * 100).toFixed(1) + "%"); });
+    document.getElementById("ramp").style.background = "linear-gradient(90deg," + parts.join(",") + ")";
+    var el = document.getElementById("ticks");
+    [0, 1000, 2000, 3000, 4000, 5000, 6500].forEach(function (v) { var s = document.createElement("span"); s.style.left = (v - lo) / (hi - lo) * 100 + "%"; s.textContent = v === 6500 ? "6500+" : v; el.appendChild(s); });
+  })();
+
+  function lonToX(lon) { return (lon - LONC) * KX; }
+  function latToZ(lat) { return (LATC - lat) * KZ; }
+  function xToLon(x) { return LONC + x / KX; }
+  function zToLat(z) { return LATC - z / KZ; }
+  function yOf(e) { return e / 10000 * exag; }
+
+  function unpack(b64) {
+    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+  }
+
+  // ---------- scene ----------
+  var stage = document.getElementById("stage");
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 0);
+  stage.appendChild(renderer.domElement);
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(36, 1, 0.5, 9000);
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  var MIN_D = 9, MAX_D = 3200;
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI * 0.47; controls.minDistance = MIN_D; controls.maxDistance = MAX_D;
+  controls.autoRotate = false; controls.autoRotateSpeed = 0.55;
+  controls.screenSpacePanning = false;
+  controls.enableZoom = false;
+  controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.ROTATE, RIGHT: THREE.MOUSE.ROTATE };
+  controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
+  controls.keyPanSpeed = 24;
+  controls.listenToKeyEvents(window);
+
+  scene.add(new THREE.HemisphereLight(0xf4f1ea, 0x5a4a3c, 0.6));
+  var sun = new THREE.DirectionalLight(0xfff6e8, 1.0);
+  sun.position.set(-1.0, 1.15, -0.85); scene.add(sun);
+
+  var H, WATER, REGION, RELIEF, CELL;   // grids
+  var posAttr, terrainGeo, wallGeo, wallTop, terrainMat;
+  var drapes = [];
+
+  // ---------- base sampling (matches the mesh triangulation exactly) ----------
+  function baseRaw(i, j) { return H[j * NX + i]; }
+  function elevTri(lon, lat) {
+    var fx = (lon - LON0) / RES, fy = (LAT1 - lat) / RES;
+    var i = Math.floor(fx), j = Math.floor(fy);
+    if (i < 0) { i = 0; fx = 0; } if (j < 0) { j = 0; fy = 0; }
+    if (i > NX - 2) { i = NX - 2; fx = NX - 1; } if (j > NY - 2) { j = NY - 2; fy = NY - 1; }
+    var tx = fx - i, ty = fy - j;
+    var h00 = H[j * NX + i], h10 = H[j * NX + i + 1], h01 = H[(j + 1) * NX + i], h11 = H[(j + 1) * NX + i + 1];
+    if (tx + ty <= 1) return h00 + tx * (h10 - h00) + ty * (h01 - h00);
+    return h11 + (1 - tx) * (h01 - h11) + (1 - ty) * (h10 - h11);
+  }
+  function cr(p0, p1, p2, p3, t) { // Catmull-Rom
+    return p1 + 0.5 * t * (p2 - p0 + t * (2 * p0 - 5 * p1 + 4 * p2 - p3 + t * (3 * (p1 - p2) + p3 - p0)));
+  }
+  function elevCubic(lon, lat) {
+    var fx = (lon - LON0) / RES, fy = (LAT1 - lat) / RES;
+    var i = Math.floor(fx), j = Math.floor(fy), tx = fx - i, ty = fy - j;
+    if (i < 1 || j < 1 || i > NX - 3 || j > NY - 3) return elevTri(lon, lat);
+    var rows = [], mn = 1e9, mx = -1e9;
+    for (var r = -1; r <= 2; r++) {
+      var o = (j + r) * NX + i;
+      var a = H[o - 1], b = H[o], c = H[o + 1], d = H[o + 2];
+      if (r === 0 || r === 1) { mn = Math.min(mn, b, c); mx = Math.max(mx, b, c); }
+      rows.push(cr(a, b, c, d, tx));
+    }
+    var v = cr(rows[0], rows[1], rows[2], rows[3], ty);
+    return Math.max(mn - 80, Math.min(mx + 80, v));
+  }
+  function nearestIdx(lon, lat) {
+    var i = Math.round((lon - LON0) / RES), j = Math.round((LAT1 - lat) / RES);
+    if (i < 0 || j < 0 || i >= NX || j >= NY) return -1;
+    return j * NX + i;
+  }
+  function reliefAt(lon, lat) {
+    var fx = (lon - LON0) / RES, fy = (LAT1 - lat) / RES;
+    var i = Math.max(0, Math.min(NX - 2, Math.floor(fx))), j = Math.max(0, Math.min(NY - 2, Math.floor(fy)));
+    var tx = Math.min(1, Math.max(0, fx - i)), ty = Math.min(1, Math.max(0, fy - j));
+    var a = RELIEF[j * NX + i], b = RELIEF[j * NX + i + 1], c = RELIEF[(j + 1) * NX + i], d = RELIEF[(j + 1) * NX + i + 1];
+    return ((a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty) * 10;
+  }
+  function fracAt(arr, lon, lat, isRegion) {
+    var fx = (lon - LON0) / RES, fy = (LAT1 - lat) / RES;
+    var i = Math.max(0, Math.min(NX - 2, Math.floor(fx))), j = Math.max(0, Math.min(NY - 2, Math.floor(fy)));
+    var tx = Math.min(1, Math.max(0, fx - i)), ty = Math.min(1, Math.max(0, fy - j)), k = j * NX + i;
+    var a = arr[k] ? 1 : 0, b = arr[k + 1] ? 1 : 0, c = arr[k + NX] ? 1 : 0, d = arr[k + NX + 1] ? 1 : 0;
+    return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+  }
+  function cellDrawn(lon, lat) {
+    var i = Math.floor((lon - LON0) / RES), j = Math.floor((LAT1 - lat) / RES);
+    if (i < 0 || j < 0 || i >= NX - 1 || j >= NY - 1) return false;
+    return CELL[j * (NX - 1) + i] === 1;
+  }
+
+  // ---------- procedural detail (deterministic in km space) ----------
+  var GRAD = new Float32Array(512);
+  for (var g = 0; g < 256; g++) { var ang = g / 256 * Math.PI * 2 + 0.37; GRAD[g * 2] = Math.cos(ang); GRAD[g * 2 + 1] = Math.sin(ang); }
+  function hash(ix, iy) {
+    var h = Math.imul(ix, 374761393) ^ Math.imul(iy, 668265263);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return (h ^ (h >>> 16)) & 255;
+  }
+  function gnoise(x, y) {
+    var ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+    var u = fx * fx * fx * (fx * (fx * 6 - 15) + 10), v = fy * fy * fy * (fy * (fy * 6 - 15) + 10);
+    var h, n00, n10, n01, n11;
+    h = hash(ix, iy) * 2; n00 = GRAD[h] * fx + GRAD[h + 1] * fy;
+    h = hash(ix + 1, iy) * 2; n10 = GRAD[h] * (fx - 1) + GRAD[h + 1] * fy;
+    h = hash(ix, iy + 1) * 2; n01 = GRAD[h] * fx + GRAD[h + 1] * (fy - 1);
+    h = hash(ix + 1, iy + 1) * 2; n11 = GRAD[h] * (fx - 1) + GRAD[h + 1] * (fy - 1);
+    var a = n00 + (n10 - n00) * u, b = n01 + (n11 - n01) * u;
+    return (a + (b - a) * v) * 1.4;
+  }
+  function detail(kmx, kmy, lambda0, minLambda, ridgeMix) {
+    var sum = 0, rsum = 0, amp = 1, norm = 0, lam = lambda0, weight = 1;
+    for (var o = 0; o < 7 && lam >= minLambda; o++) {
+      var x = kmx / lam + o * 17.3, y = kmy / lam - o * 9.1;
+      var n = gnoise(x, y);
+      sum += n * amp;
+      var r = 1 - Math.abs(n); r = r * r * weight; weight = Math.min(1, r * 1.6);
+      rsum += (r - 0.45) * amp;
+      norm += amp; amp *= 0.5; lam *= 0.5;
+    }
+    if (!norm) return 0;
+    return ((1 - ridgeMix) * sum + ridgeMix * rsum * 1.6) / norm;
+  }
+
+  // ---------- region mask & base mesh ----------
+  function buildCells() {
+    CELL = new Uint8Array((NX - 1) * (NY - 1));
+    for (var j = 0; j < NY - 1; j++) for (var i = 0; i < NX - 1; i++) {
+      var k = j * NX + i, n = (REGION[k] ? 1 : 0) + (REGION[k + 1] ? 1 : 0) + (REGION[k + NX] ? 1 : 0) + (REGION[k + NX + 1] ? 1 : 0);
+      CELL[j * (NX - 1) + i] = n >= 2 ? 1 : 0;
+    }
+  }
+  var patchUniform = { value: new THREE.Vector4(1e9, 1e9, -1e9, -1e9) };
+  var wallBottom = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--wall-bottom").trim() || "#4a3a2f");
+  function patchDiscard(sh) {
+    sh.uniforms.uPatch = patchUniform;
+    sh.vertexShader = "varying vec2 vPXZ;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvPXZ = (modelMatrix * vec4(transformed, 1.0)).xz;");
+    sh.fragmentShader = "varying vec2 vPXZ;\nuniform vec4 uPatch;\n" + sh.fragmentShader.replace("void main() {",
+      "void main() {\n if (vPXZ.x > uPatch.x && vPXZ.x < uPatch.z && vPXZ.y > uPatch.y && vPXZ.y < uPatch.w) discard;");
+  }
+  function buildTerrain() {
+    var n = NX * NY, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), rgb = [0, 0, 0];
+    for (var j = 0; j < NY; j++) for (var i = 0; i < NX; i++) {
+      var k = j * NX + i;
+      pos[k * 3] = lonToX(LON0 + i * RES); pos[k * 3 + 2] = latToZ(LAT1 - j * RES);
+      var reg = REGION[k];
+      if (!reg) { // ocean vertex next to the coast: borrow a land neighbour's tint
+        reg = REGION[Math.max(0, k - 1)] || REGION[Math.min(n - 1, k + 1)] || REGION[Math.max(0, k - NX)] || REGION[Math.min(n - 1, k + NX)];
+      }
+      colorFor(H[k], reg, WATER[k], 0, rgb);
+      col[k * 3] = rgb[0]; col[k * 3 + 1] = rgb[1]; col[k * 3 + 2] = rgb[2];
+    }
+    var CW = NX - 1, cnt = 0;
+    for (var c = 0; c < CELL.length; c++) cnt += CELL[c];
+    var idx = new Uint32Array(cnt * 6), p = 0;
+    for (var cj = 0; cj < NY - 1; cj++) for (var ci = 0; ci < CW; ci++) {
+      if (!CELL[cj * CW + ci]) continue;
+      var v00 = cj * NX + ci, v10 = v00 + 1, v01 = v00 + NX, v11 = v01 + 1;
+      idx[p++] = v01; idx[p++] = v11; idx[p++] = v10; idx[p++] = v01; idx[p++] = v10; idx[p++] = v00;
+    }
+    terrainGeo = new THREE.BufferGeometry();
+    posAttr = new THREE.BufferAttribute(pos, 3);
+    terrainGeo.setAttribute("position", posAttr);
+    terrainGeo.setAttribute("normal", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    terrainGeo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    terrainGeo.setIndex(new THREE.BufferAttribute(idx, 1));
+    terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    terrainMat.onBeforeCompile = patchDiscard;
+    scene.add(new THREE.Mesh(terrainGeo, terrainMat));
+
+    // side walls along the land boundary
+    var wp = [], wc = [], wn = [], top = [];
+    var bottomC = wallBottom;
+    var B = [bottomC.r, bottomC.g, bottomC.b];
+    function quad(va, vb, nx, nz) {
+      var ax = pos[va * 3], az = pos[va * 3 + 2], bx = pos[vb * 3], bz = pos[vb * 3 + 2];
+      var ca = [col[va * 3] * 0.62, col[va * 3 + 1] * 0.58, col[va * 3 + 2] * 0.55];
+      var cb = [col[vb * 3] * 0.62, col[vb * 3 + 1] * 0.58, col[vb * 3 + 2] * 0.55];
+      wp.push(bx, 0, bz, bx, BASE_Y, bz, ax, BASE_Y, az, bx, 0, bz, ax, BASE_Y, az, ax, 0, az);
+      top.push(vb, -1, -1, vb, -1, va);
+      wc.push(cb[0], cb[1], cb[2], B[0], B[1], B[2], B[0], B[1], B[2], cb[0], cb[1], cb[2], B[0], B[1], B[2], ca[0], ca[1], ca[2]);
+      for (var q = 0; q < 6; q++) wn.push(nx, 0, nz);
+    }
+    for (cj = 0; cj < NY - 1; cj++) for (ci = 0; ci < CW; ci++) {
+      if (!CELL[cj * CW + ci]) continue;
+      var a00 = cj * NX + ci, a10 = a00 + 1, a01 = a00 + NX, a11 = a01 + 1;
+      if (!(cj > 0 && CELL[(cj - 1) * CW + ci])) quad(a00, a10, 0, -1);
+      if (!(cj < NY - 2 && CELL[(cj + 1) * CW + ci])) quad(a11, a01, 0, 1);
+      if (!(ci > 0 && CELL[cj * CW + ci - 1])) quad(a01, a00, -1, 0);
+      if (!(ci < CW - 1 && CELL[cj * CW + ci + 1])) quad(a10, a11, 1, 0);
+    }
+    wallGeo = new THREE.BufferGeometry();
+    wallGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(wp), 3));
+    wallGeo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(wc), 3));
+    wallGeo.setAttribute("normal", new THREE.BufferAttribute(new Float32Array(wn), 3));
+    wallTop = new Int32Array(top);
+    var wallMat = new THREE.MeshLambertMaterial({ vertexColors: true }); wallMat.onBeforeCompile = patchDiscard;
+    scene.add(new THREE.Mesh(wallGeo, wallMat));
+  }
+
+  function computeNormals(pos, nrm, nx, ny, dx, dz) {
+    for (var j = 0; j < ny; j++) for (var i = 0; i < nx; i++) {
+      var k = j * nx + i;
+      var hl = pos[(j * nx + Math.max(0, i - 1)) * 3 + 1], hr = pos[(j * nx + Math.min(nx - 1, i + 1)) * 3 + 1];
+      var hu = pos[(Math.max(0, j - 1) * nx + i) * 3 + 1], hd = pos[(Math.min(ny - 1, j + 1) * nx + i) * 3 + 1];
+      var gx = (hr - hl) / ((i > 0 && i < nx - 1 ? 2 : 1) * dx), gz = (hd - hu) / ((j > 0 && j < ny - 1 ? 2 : 1) * dz);
+      var len = Math.sqrt(gx * gx + 1 + gz * gz);
+      nrm[k * 3] = -gx / len; nrm[k * 3 + 1] = 1 / len; nrm[k * 3 + 2] = -gz / len;
+    }
+  }
+
+  function applyExaggeration() {
+    var pos = posAttr.array;
+    for (var k = 0, n = NX * NY; k < n; k++) pos[k * 3 + 1] = yOf(H[k]);
+    computeNormals(pos, terrainGeo.attributes.normal.array, NX, NY, RES * KX, RES * KZ);
+    posAttr.needsUpdate = true; terrainGeo.attributes.normal.needsUpdate = true;
+    terrainGeo.computeBoundingSphere();
+    var wpos = wallGeo.attributes.position.array;
+    for (var w = 0; w < wallTop.length; w++) if (wallTop[w] >= 0) wpos[w * 3 + 1] = pos[wallTop[w] * 3 + 1];
+    wallGeo.attributes.position.needsUpdate = true; wallGeo.computeBoundingSphere();
+    updatePatchGeometry();
+    refreshHeights();
+  }
+
+  // ---------- detail patch (LOD around the view target) ----------
+  var PN = isTouch ? 193 : 257;                // vertices per side
+  var patch = null;                            // { x0, z0, size, step, h: Float32Array }
+  var patchGeo = new THREE.BufferGeometry();
+  var pPos = new Float32Array(PN * PN * 3), pNrm = new Float32Array(PN * PN * 3), pCol = new Float32Array(PN * PN * 3);
+  var pH = new Float32Array(PN * PN), pReg = new Uint8Array(PN * PN), pWater = new Uint8Array(PN * PN), pCell = new Uint8Array((PN - 1) * (PN - 1));
+  patchGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
+  patchGeo.setAttribute("normal", new THREE.BufferAttribute(pNrm, 3));
+  patchGeo.setAttribute("color", new THREE.BufferAttribute(pCol, 3));
+  var patchMesh = new THREE.Mesh(patchGeo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  patchMesh.visible = false; patchMesh.frustumCulled = false;
+  scene.add(patchMesh);
+  var PATCH_MAX_D = 320;
+  var skirtGeo = new THREE.BufferGeometry(), skirtTop = new Int32Array(0);
+  var skirtMesh = new THREE.Mesh(skirtGeo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  skirtMesh.visible = false; skirtMesh.frustumCulled = false; scene.add(skirtMesh);
+  function buildSkirt() {
+    var wp = [], wn = [], top = [], C = PN - 1;
+    function q(va, vb, nx, nz) {
+      wp.push(pPos[vb * 3], 0, pPos[vb * 3 + 2], pPos[vb * 3], BASE_Y, pPos[vb * 3 + 2], pPos[va * 3], BASE_Y, pPos[va * 3 + 2],
+              pPos[vb * 3], 0, pPos[vb * 3 + 2], pPos[va * 3], BASE_Y, pPos[va * 3 + 2], pPos[va * 3], 0, pPos[va * 3 + 2]);
+      top.push(vb, -1, -1, vb, -1, va);
+      for (var t = 0; t < 6; t++) wn.push(nx, 0, nz);
+    }
+    for (var j = 0; j < C; j++) for (var i = 0; i < C; i++) {
+      if (!pCell[j * C + i]) continue;
+      var a00 = j * PN + i, a10 = a00 + 1, a01 = a00 + PN, a11 = a01 + 1;
+      if (j > 0 && !pCell[(j - 1) * C + i]) q(a00, a10, 0, -1);
+      if (j < C - 1 && !pCell[(j + 1) * C + i]) q(a11, a01, 0, 1);
+      if (i > 0 && !pCell[j * C + i - 1]) q(a01, a00, -1, 0);
+      if (i < C - 1 && !pCell[j * C + i + 1]) q(a10, a11, 1, 0);
+    }
+    skirtGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(wp), 3));
+    skirtGeo.setAttribute("normal", new THREE.BufferAttribute(new Float32Array(wn), 3));
+    skirtGeo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(wp.length), 3));
+    skirtTop = new Int32Array(top);
+    skirtMesh.visible = top.length > 0;
+  }
+  function updateSkirt() {
+    var sp = skirtGeo.attributes.position, sc = skirtGeo.attributes.color;
+    if (!sp) return;
+    var B = wallBottom;
+    for (var w = 0; w < skirtTop.length; w++) {
+      var v = skirtTop[w];
+      if (v >= 0) { sp.array[w * 3 + 1] = pPos[v * 3 + 1]; sc.array[w * 3] = pCol[v * 3] * 0.62; sc.array[w * 3 + 1] = pCol[v * 3 + 1] * 0.58; sc.array[w * 3 + 2] = pCol[v * 3 + 2] * 0.55; }
+      else { sc.array[w * 3] = B.r; sc.array[w * 3 + 1] = B.g; sc.array[w * 3 + 2] = B.b; }
+    }
+    sp.needsUpdate = true; sc.needsUpdate = true; skirtGeo.computeBoundingSphere();
+  }
+
+  function buildPatch(cx, cz, size) {
+    var step = size / (PN - 1), x0 = cx - size / 2, z0 = cz - size / 2;
+    var stepKm = step * 10, minLam = Math.max(0.35, stepKm * 2.2);
+    var rgb = [0, 0, 0];
+    for (var j = 0; j < PN; j++) {
+      var z = z0 + j * step, lat = zToLat(z), kmy = lat * 111.32;
+      var ey = Math.min(j, PN - 1 - j) / (PN - 1);
+      for (var i = 0; i < PN; i++) {
+        var k = j * PN + i, x = x0 + i * step, lon = xToLon(x), kmx = lon * 111.32 * 0.8192;
+        var ex = Math.min(i, PN - 1 - i) / (PN - 1), e = Math.min(ex, ey);
+        var fade = e >= 0.1 ? 1 : (e / 0.1) * (e / 0.1) * (3 - 2 * (e / 0.1));
+        var ni = nearestIdx(lon, lat), reg = ni >= 0 ? REGION[ni] : 0, wat = fracAt(WATER, lon, lat) > 0.5 ? 1 : 0;
+        if (!reg && ni >= 0) reg = REGION[ni + 1] || REGION[ni - 1] || REGION[ni + NX] || REGION[ni - NX] || 0;
+        var tri = elevTri(lon, lat), h = tri;
+        if (fade > 0 && !wat && reg) {
+          var cub = elevCubic(lon, lat);
+          var rel = reliefAt(lon, lat);
+          var amp = Math.min(520, 3 + rel * 0.16 + (cub > 3000 ? 25 : 0));
+          var ridge = Math.max(0, Math.min(1, (rel - 250) / 900));
+          var d = detail(kmx, kmy, 14, minLam, ridge);
+          // keep the sea shore and valley floors from going below sea level
+          h = tri + (cub - tri + d * amp) * fade;
+          if (h < 0) h = 0;
+        }
+        pH[k] = h; pReg[k] = reg; pWater[k] = wat;
+        pPos[k * 3] = x; pPos[k * 3 + 2] = z;
+      }
+    }
+    patch = { x0: x0, z0: z0, size: size, step: step, cx: cx, cz: cz };
+    // index: cells whose centre lies in a drawn base cell
+    var idx = [];
+    for (j = 0; j < PN - 1; j++) for (i = 0; i < PN - 1; i++) {
+      var clon = xToLon(x0 + (i + 0.5) * step), clat = zToLat(z0 + (j + 0.5) * step);
+      var drawn = fracAt(REGION, clon, clat) > 0.5;
+      pCell[j * (PN - 1) + i] = drawn ? 1 : 0;
+      if (!drawn) continue;
+      var a = j * PN + i, b = a + 1, c = a + PN, dd = c + 1;
+      idx.push(c, dd, b, c, b, a);
+    }
+    patchGeo.setIndex(idx);
+    buildSkirt();
+    updatePatchGeometry(true);
+    var m = step * 0.5;
+    patchUniform.value.set(x0 + m, z0 + m, x0 + size - m, z0 + size - m);
+    patchMesh.visible = true;
+    refreshHeights();
+    dirty = true;
+  }
+  function updatePatchGeometry(recolor) {
+    if (!patch) return;
+    for (var k = 0, n = PN * PN; k < n; k++) pPos[k * 3 + 1] = yOf(pH[k]);
+    computeNormals(pPos, pNrm, PN, PN, patch.step, patch.step);
+    var rgb = [0, 0, 0];
+    for (k = 0; k < n; k++) {
+      var slope = 1 - pNrm[k * 3 + 1] / Math.max(1e-6, Math.sqrt(1 + 0));
+      colorFor(pH[k], pReg[k], pWater[k], slope * 3, rgb);
+      pCol[k * 3] = rgb[0]; pCol[k * 3 + 1] = rgb[1]; pCol[k * 3 + 2] = rgb[2];
+    }
+    patchGeo.attributes.position.needsUpdate = true;
+    patchGeo.attributes.normal.needsUpdate = true;
+    patchGeo.attributes.color.needsUpdate = true;
+    patchGeo.computeBoundingSphere();
+    updateSkirt();
+  }
+  function clearPatch() {
+    if (!patch) return;
+    patch = null; patchMesh.visible = false; skirtMesh.visible = false;
+    patchUniform.value.set(1e9, 1e9, -1e9, -1e9);
+    refreshHeights(); dirty = true;
+  }
+  // height (metres) at lon/lat, using the detail patch where present
+  function heightAt(lon, lat) {
+    if (patch) {
+      var x = lonToX(lon), z = latToZ(lat);
+      var fx = (x - patch.x0) / patch.step, fz = (z - patch.z0) / patch.step;
+      if (fx >= 0 && fz >= 0 && fx < PN - 1 && fz < PN - 1) {
+        var i = Math.floor(fx), j = Math.floor(fz), tx = fx - i, tz = fz - j, k = j * PN + i;
+        return (pH[k] * (1 - tx) + pH[k + 1] * tx) * (1 - tz) + (pH[k + PN] * (1 - tx) + pH[k + PN + 1] * tx) * tz;
+      }
+    }
+    return elevTri(lon, lat);
+  }
+  var lastPatchCheck = 0, lastMove = 0;
+  function maybeUpdatePatch(now) {
+    var dist = camera.position.distanceTo(controls.target);
+    if (dist > PATCH_MAX_D) { clearPatch(); return; }
+    var size = Math.max(16, Math.min(300, dist * 1.35));
+    var t = controls.target;
+    if (patch) {
+      var moved = Math.hypot(t.x - patch.cx, t.z - patch.cz) / patch.size, ratio = size / patch.size;
+      var needUrgent = moved > 0.28 || ratio < 0.55 || ratio > 1.8;
+      var needSoft = moved > 0.06 || ratio < 0.85 || ratio > 1.18;
+      if (!needUrgent && !(needSoft && now - lastMove > 160)) return;
+      if (!needUrgent && now - lastPatchCheck < 120) return;
+    }
+    lastPatchCheck = now;
+    buildPatch(t.x, t.z, size);
+  }
+
+  // ---------- draped lines & ribbons ----------
+  function densify(path, step) {
+    var out = [];
+    for (var i = 0; i < path.length - 1; i++) {
+      var a = path[i], b = path[i + 1], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
+      for (var k = 0; k < n; k++) out.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+    }
+    out.push(path[path.length - 1]);
+    return out;
+  }
+  function addRiver(path, width) {
+    var pts = densify(path, 0.03), n = pts.length;
+    // ribbon (visible when close) + hairline (visible from afar)
+    var pos = new Float32Array(n * 2 * 3), idx = [];
+    for (var i = 0; i < n - 1; i++) { var a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setIndex(idx);
+    var mat = new THREE.MeshBasicMaterial({ color: 0x2f7fc4, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+    var mesh = new THREE.Mesh(geo, mat); scene.add(mesh);
+    var lpos = new Float32Array(n * 3), lgeo = new THREE.BufferGeometry();
+    lgeo.setAttribute("position", new THREE.BufferAttribute(lpos, 3));
+    var line = new THREE.Line(lgeo, new THREE.LineBasicMaterial({ color: 0x2a74b8 })); scene.add(line);
+    var d = { meshes: [mesh, line], layer: "water", update: function () {
+      for (var i = 0; i < n; i++) {
+        var p = pts[i], q = pts[Math.min(n - 1, i + 1)], r = pts[Math.max(0, i - 1)];
+        var tx = (q[0] - r[0]) * KX, tz = -(q[1] - r[1]) * KZ, L = Math.hypot(tx, tz) || 1;
+        var ox = -tz / L * width * ribbonScale, oz = tx / L * width * ribbonScale;
+        var x = lonToX(p[0]), z = latToZ(p[1]), y = yOf(Math.max(0, heightAt(p[0], p[1]))) + 0.06;
+        pos[i * 6] = x + ox; pos[i * 6 + 1] = y; pos[i * 6 + 2] = z + oz; pos[i * 6 + 3] = x - ox; pos[i * 6 + 4] = y; pos[i * 6 + 5] = z - oz;
+        lpos[i * 3] = x; lpos[i * 3 + 1] = y + 0.04; lpos[i * 3 + 2] = z;
+      }
+      geo.attributes.position.needsUpdate = true; geo.computeBoundingSphere();
+      lgeo.attributes.position.needsUpdate = true; lgeo.computeBoundingSphere();
+    } };
+    drapes.push(d); return d;
+  }
+  function addLines(list, layer, color, opacity, step) {
+    var segs = [];
+    list.forEach(function (flat) {
+      var r = [];
+      for (var i = 0; i < flat.length; i += 2) r.push([LON0 + flat[i] / 200, LAT0 + flat[i + 1] / 200]);
+      var pts = densify(r, step);
+      for (i = 0; i < pts.length - 1; i++) segs.push(pts[i], pts[i + 1]);
+    });
+    var pos = new Float32Array(segs.length * 3), geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    var mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity, depthWrite: false });
+    var lines = new THREE.LineSegments(geo, mat); lines.renderOrder = 2; scene.add(lines);
+    var d = { meshes: [lines], layer: layer, update: function () {
+      for (var i = 0; i < segs.length; i++) {
+        var p = segs[i];
+        pos[i * 3] = lonToX(p[0]); pos[i * 3 + 1] = yOf(Math.max(0, heightAt(p[0], p[1]))) + 0.1; pos[i * 3 + 2] = latToZ(p[1]);
+      }
+      geo.attributes.position.needsUpdate = true; geo.computeBoundingSphere();
+    } };
+    drapes.push(d);
+  }
+  // ---------- national borders: pink halo band + dark dash-dot core, sized in screen pixels ----------
+  var ribbons = [], lastWpp = 0;
+  function worldPerPx() {
+    var d = camera.position.distanceTo(controls.target);
+    return 2 * d * Math.tan(camera.fov * Math.PI / 360) / Math.max(1, window.innerHeight);
+  }
+  function addBorderRibbons(list, layer, haloPx, corePx, haloColor, haloOpacity, coreColor, dashPx) {
+    var lines = [];
+    list.forEach(function (flat) {
+      var r = [];
+      for (var i = 0; i < flat.length; i += 2) r.push([LON0 + flat[i] / 200, LAT0 + flat[i + 1] / 200]);
+      if (r.length >= 2) lines.push(densify(r, 0.012));
+    });
+    var nPts = 0; lines.forEach(function (l) { nPts += l.length; });
+    var P = new Float32Array(nPts * 4), dist = new Float32Array(nPts * 2), idx = [], base = 0;
+    lines.forEach(function (l) {
+      var acc = 0;
+      for (var i = 0; i < l.length; i++) {
+        var p = l[i], q = l[Math.min(l.length - 1, i + 1)], r = l[Math.max(0, i - 1)];
+        var tx = (q[0] - r[0]) * KX, tz = -(q[1] - r[1]) * KZ, L = Math.hypot(tx, tz) || 1, k = base + i;
+        P[k * 4] = p[0]; P[k * 4 + 1] = p[1]; P[k * 4 + 2] = -tz / L; P[k * 4 + 3] = tx / L;
+        if (i > 0) acc += Math.hypot((p[0] - l[i - 1][0]) * KX, (p[1] - l[i - 1][1]) * KZ);
+        dist[k * 2] = acc; dist[k * 2 + 1] = acc;
+        if (i < l.length - 1) { var a = k * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+      }
+      base += l.length;
+    });
+    function make(widthPx, mat, liftPx, order) {
+      var pos = new Float32Array(nPts * 6), geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute("aDist", new THREE.BufferAttribute(dist, 1));
+      geo.setIndex(idx);
+      var mesh = new THREE.Mesh(geo, mat); mesh.renderOrder = order; mesh.frustumCulled = false; scene.add(mesh);
+      return { mesh: mesh, update: function (wpp) {
+        var hw = widthPx * wpp / 2, lift = 0.03 + liftPx * wpp;
+        for (var k = 0; k < nPts; k++) {
+          var lon = P[k * 4], lat = P[k * 4 + 1], ox = P[k * 4 + 2] * hw, oz = P[k * 4 + 3] * hw;
+          var x = lonToX(lon), z = latToZ(lat);
+          var l1 = lon + ox / KX, a1 = lat - oz / KZ, l2 = lon - ox / KX, a2 = lat + oz / KZ;
+          var yc = heightAt(lon, lat);
+          pos[k * 6] = x + ox; pos[k * 6 + 1] = yOf(Math.max(0, heightAt(l1, a1), yc)) + lift; pos[k * 6 + 2] = z + oz;
+          pos[k * 6 + 3] = x - ox; pos[k * 6 + 4] = yOf(Math.max(0, heightAt(l2, a2), yc)) + lift; pos[k * 6 + 5] = z - oz;
+        }
+        geo.attributes.position.needsUpdate = true;
+      } };
+    }
+    var haloMat = new THREE.MeshBasicMaterial({ color: haloColor, transparent: true, opacity: haloOpacity, depthWrite: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
+    var coreMat = new THREE.MeshBasicMaterial({ color: coreColor, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 });
+    var uDash = { value: 1 };
+    coreMat.onBeforeCompile = function (sh) {
+      sh.uniforms.uDash = uDash;
+      sh.vertexShader = "attribute float aDist;\nvarying float vDist;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvDist = aDist;");
+      sh.fragmentShader = "varying float vDist;\nuniform float uDash;\n" + sh.fragmentShader.replace("void main() {",
+        "void main() {\n float t = fract(vDist / uDash);\n if ((t > 0.56 && t < 0.68) || t > 0.8) discard;");
+    };
+    var halo = make(haloPx, haloMat, 1.5, 3), core = make(corePx, coreMat, 2.0, 4);
+    var rb = { layer: layer, meshes: [halo.mesh, core.mesh], update: function () {
+      var wpp = worldPerPx(); uDash.value = dashPx * wpp;
+      halo.update(wpp); core.update(wpp);
+    } };
+    ribbons.push(rb); drapes.push(rb);
+  }
+  function updateRibbonsForZoom() {
+    var wpp = worldPerPx();
+    if (lastWpp && Math.abs(wpp / lastWpp - 1) < 0.07) return;
+    lastWpp = wpp;
+    ribbons.forEach(function (r) { r.update(); });
+    dirty = true;
+  }
+  var gratLines;
+  function addGraticule() {
+    var segs = [];
+    for (var lo = 60; lo <= 145; lo += 5) segs.push(lonToX(lo), BASE_Y, latToZ(LAT0), lonToX(lo), BASE_Y, latToZ(LAT1));
+    for (var la = 5; la <= 55; la += 5) segs.push(lonToX(LON0), BASE_Y, latToZ(la), lonToX(LON1), BASE_Y, latToZ(la));
+    [[LON0, LAT0, LON1, LAT0], [LON1, LAT0, LON1, LAT1], [LON1, LAT1, LON0, LAT1], [LON0, LAT1, LON0, LAT0]].forEach(function (s) {
+      segs.push(lonToX(s[0]), BASE_Y, latToZ(s[1]), lonToX(s[2]), BASE_Y, latToZ(s[3]));
+    });
+    var geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(segs, 3));
+    gratLines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.6 }));
+    scene.add(gratLines);
+    for (lo = 70; lo <= 140; lo += 10) labels.push(mkLabel("grid", lo + "°E", lo, LAT0 + 0.15, { onBase: true, prio: -1 }));
+    for (la = 10; la <= 50; la += 10) labels.push(mkLabel("grid", la + "°N", LON1 - 0.8, la, { onBase: true, prio: -1 }));
+  }
+  function themeColors() {
+    var cs = getComputedStyle(document.documentElement);
+    if (gratLines) gratLines.material.color.set(cs.getPropertyValue("--grat").trim() || "#9aaaa8");
+    dirty = true;
+  }
+
+  // ---------- labels ----------
+  var labelLayer = document.getElementById("labels");
+  var labels = [];
+  var layerOn = { region: true, range: true, peak: true, water: true, city: true, country: true, nborder: true, border: true, prov: false, grid: true };
+  function mkLabel(type, text, lon, lat, o) {
+    o = o || {};
+    var el = document.createElement("div");
+    el.className = "lb " + type + (o.cls ? " " + o.cls : "");
+    if (type === "peak") el.innerHTML = '<span class="tri">▲</span>' + text[0] + '<span class="h">' + text[1] + "</span>";
+    else if (type === "city") el.innerHTML = '<span class="dot"></span>' + text;
+    else el.textContent = text;
+    labelLayer.appendChild(el);
+    return { el: el, type: type, layer: o.layer || type, lon: lon, lat: lat, prio: o.prio || 0, lift: o.lift || 0, onBase: !!o.onBase,
+             maxD: o.maxD || 1e9, anchorLeft: type === "peak" || type === "city",
+             x: lonToX(lon), z: latToZ(lat), y: 0, w: 0, h: 0, shown: false };
+  }
+  // [name, lon, lat, priority, extra-class, maxDistance]
+  var REGIONS = [
+    ["青藏高原", 88, 33.2, 10, "big"], ["内蒙古高原", 112.5, 43.4, 9, "big"], ["黄土高原", 108.6, 37.1, 9], ["云贵高原", 104.6, 25.7, 9],
+    ["塔里木盆地", 83, 39.3, 9], ["准噶尔盆地", 86.6, 45.4, 8], ["柴达木盆地", 94.6, 37.3, 8], ["四川盆地", 105.8, 30.1, 9],
+    ["东北平原", 125.2, 45.4, 9], ["华北平原", 115.4, 37.2, 9], ["长江中下游平原", 116.6, 30.5, 8], ["东南丘陵", 115.2, 26.3, 7],
+    ["吐鲁番盆地", 89.4, 42.95, 3, "small", 260], ["河西走廊", 99.6, 39.3, 3, "small", 260], ["帕米尔高原", 73.6, 38.1, 6, "small"],
+    ["辽东半岛", 122.4, 40.0, 2, "small", 200], ["山东半岛", 120.6, 36.9, 2, "small", 200], ["雷州半岛", 110.0, 20.9, 2, "small", 200],
+    ["西西伯利亚平原", 76, 54.6, 6], ["哈萨克丘陵", 73.5, 49.2, 6], ["图兰低地", 63.5, 43.5, 5], ["费尔干纳盆地", 71.4, 40.75, 3, "small", 300],
+    ["德干高原", 77.5, 17.5, 8], ["印度河平原", 71.4, 28.8, 7], ["恒河平原", 82.5, 26.3, 8], ["塔尔沙漠", 71.4, 26.4, 5, "small"],
+    ["掸邦高原", 98.0, 21.6, 6], ["呵叻高原", 103.4, 15.9, 6], ["湄南河平原", 100.2, 14.7, 5, "small"], ["湄公河三角洲", 105.6, 9.9, 5, "small"],
+    ["戈壁", 101.5, 43.4, 6], ["盖马高原", 127.6, 41.0, 4, "small", 320], ["伊朗高原", 62.6, 32.4, 4, "small"]
+  ];
+  var COUNTRIES = [
+    ["俄罗斯", 92.0, 54.4, 9], ["俄罗斯", 134.6, 51.4, 9], ["蒙古", 103.5, 46.6, 9], ["哈萨克斯坦", 69.5, 48.3, 9], ["吉尔吉斯斯坦", 74.8, 41.55, 8],
+    ["塔吉克斯坦", 70.6, 38.75, 8], ["阿富汗", 66.0, 33.6, 8], ["巴基斯坦", 66.8, 27.6, 8], ["印度", 78.5, 21.8, 9], ["尼泊尔", 83.9, 28.25, 8],
+    ["不丹", 90.45, 27.4, 7], ["缅甸", 95.9, 19.7, 8], ["老挝", 102.7, 19.6, 8], ["越南", 108.0, 14.2, 8], ["朝鲜", 126.9, 40.2, 8],
+    ["韩国", 128.0, 36.4, 6, "minor"], ["日本", 140.3, 39.0, 6, "minor"], ["泰国", 100.0, 17.2, 6, "minor"], ["柬埔寨", 104.9, 12.6, 6, "minor"],
+    ["孟加拉国", 90.2, 24.0, 6, "minor"], ["斯里兰卡", 80.7, 7.9, 5, "minor"], ["菲律宾", 121.3, 16.8, 6, "minor"], ["乌兹别克斯坦", 64.0, 41.6, 5, "minor"],
+    ["土库曼斯坦", 61.6, 39.0, 4, "minor"], ["马来西亚", 101.9, 4.6, 4, "minor"], ["马来西亚", 116.6, 5.3, 3, "minor"]
+  ];
+  var RANGES = [
+    ["喜马拉雅山脉", 84.6, 28.5, 8], ["昆仑山脉", 85.5, 36.1, 7], ["天山山脉", 84.2, 43.0, 7], ["祁连山脉", 99.2, 38.6, 6],
+    ["阿尔泰山脉", 88.6, 48.0, 6], ["喀喇昆仑山脉", 77.6, 35.3, 5], ["冈底斯山脉", 83.8, 30.9, 5], ["唐古拉山脉", 92.3, 32.8, 5],
+    ["巴颜喀拉山脉", 98.2, 33.8, 5], ["横断山脉", 99.4, 28.6, 7], ["阿尔金山脉", 89.2, 38.6, 5], ["秦岭", 108.4, 33.95, 7],
+    ["大巴山", 108.6, 32.1, 4], ["大兴安岭", 121.4, 49.3, 7], ["小兴安岭", 128.1, 48.4, 5], ["长白山脉", 127.8, 42.5, 6],
+    ["太行山脉", 113.7, 37.3, 6], ["阴山山脉", 110.2, 41.1, 6], ["贺兰山", 106.1, 38.8, 4], ["南岭", 112.5, 25.2, 6],
+    ["武夷山脉", 117.3, 27.3, 5], ["巫山", 110.0, 31.2, 3], ["雪峰山", 110.7, 27.3, 4], ["大别山", 115.5, 31.15, 4],
+    ["台湾山脉", 121.15, 23.9, 5], ["念青唐古拉山", 92.0, 30.55, 4], ["吕梁山", 111.3, 37.7, 2, null, 300], ["燕山", 117.5, 40.6, 3],
+    ["六盘山", 106.2, 35.8, 2, null, 300], ["武陵山", 109.4, 28.9, 2, null, 300], ["罗霄山", 114.0, 26.8, 2, null, 300],
+    ["兴都库什山脉", 70.2, 35.6, 6], ["苏莱曼山脉", 69.8, 30.8, 4], ["西高止山脉", 74.6, 15.2, 5], ["东高止山脉", 81.8, 18.0, 4],
+    ["温迪亚山脉", 78.0, 23.6, 4], ["阿拉干山脉", 93.9, 20.3, 5], ["长山山脉", 106.6, 16.8, 5], ["萨彦岭", 96.5, 52.6, 5],
+    ["杭爱山脉", 99.3, 47.5, 5], ["肯特山脉", 109.0, 48.6, 4], ["锡霍特山脉", 136.3, 46.2, 5], ["外兴安岭", 128.0, 55.3, 4],
+    ["阿赖山脉", 72.8, 39.6, 4], ["飞驒山脉", 137.6, 36.2, 3], ["太白山脉", 128.9, 37.3, 4], ["蒙古阿尔泰山脉", 95.5, 46.4, 4],
+    ["戈壁阿尔泰山脉", 101.5, 44.9, 3], ["准噶尔阿拉套山", 79.8, 45.1, 3]
+  ];
+  var PEAKS = [
+    ["珠穆朗玛峰", "8848.86", 86.925, 27.988, 12], ["乔戈里峰", "8611", 76.51, 35.88, 6], ["干城章嘉峰", "8586", 88.15, 27.70, 5],
+    ["洛子峰", "8516", 86.93, 27.96, 1, 60], ["马卡鲁峰", "8485", 87.09, 27.89, 3, 160], ["卓奥友峰", "8188", 86.66, 28.09, 3, 160],
+    ["希夏邦马峰", "8027", 85.78, 28.35, 4], ["道拉吉里峰", "8167", 83.49, 28.70, 4], ["安纳布尔纳峰", "8091", 83.82, 28.60, 3, 220],
+    ["马纳斯卢峰", "8163", 84.56, 28.55, 3, 220], ["南迦帕尔巴特峰", "8126", 74.59, 35.24, 5], ["蒂里奇米尔峰", "7708", 71.84, 36.26, 4],
+    ["楠达德维峰", "7816", 79.97, 30.38, 4], ["索莫尼峰", "7495", 72.01, 38.94, 4], ["汗腾格里峰", "6995", 80.17, 42.21, 3, 220],
+    ["托木尔峰", "7443", 80.13, 42.03, 4], ["慕士塔格峰", "7546", 75.12, 38.27, 4], ["公格尔峰", "7649", 75.31, 38.59, 3, 220],
+    ["贡嘎山", "7556", 101.88, 29.6, 5], ["南迦巴瓦峰", "7782", 95.06, 29.63, 5], ["梅里雪山", "6740", 98.68, 28.43, 3],
+    ["冈仁波齐", "6656", 81.31, 31.07, 4], ["纳木那尼峰", "7694", 81.31, 30.43, 2, 220], ["念青唐古拉峰", "7162", 90.6, 30.4, 3],
+    ["各拉丹冬", "6621", 91.18, 33.43, 3], ["阿尼玛卿山", "6282", 99.47, 34.8, 3], ["博格达峰", "5445", 88.30, 43.80, 3],
+    ["玉龙雪山", "5596", 100.2, 27.1, 2, 220], ["四姑娘山", "6250", 102.9, 31.1, 2, 220], ["太白山", "3771", 107.77, 33.96, 3],
+    ["泰山", "1545", 117.1, 36.26, 4], ["华山", "2155", 110.08, 34.48, 2, 220], ["五台山", "3061", 113.58, 39.08, 2, 260],
+    ["峨眉山", "3099", 103.33, 29.52, 2, 220], ["黄山", "1864", 118.17, 30.13, 2, 220], ["庐山", "1474", 115.99, 29.55, 1, 160],
+    ["玉山", "3952", 120.96, 23.47, 4], ["长白山", "2691", 128.06, 42.01, 3], ["五指山", "1867", 109.67, 18.90, 2, 260],
+    ["艾丁湖", "−154", 89.3, 42.65, 4], ["别卢哈山", "4506", 86.59, 49.81, 4], ["友谊峰", "4374", 87.81, 49.15, 3],
+    ["富士山", "3776", 138.73, 35.36, 5], ["维多利亚山", "3053", 93.90, 21.23, 3], ["开加博峰", "5881", 97.53, 28.33, 3],
+    ["普比亚山", "2819", 102.90, 18.97, 3], ["番西邦峰", "3143", 103.77, 22.30, 3], ["阿奈穆迪峰", "2695", 77.06, 10.17, 3],
+    ["汉拿山", "1950", 126.53, 33.36, 3], ["基纳巴卢山", "4095", 116.56, 6.08, 3], ["阿波山", "2954", 125.27, 6.99, 3],
+    ["奥特根腾格尔峰", "4031", 97.55, 47.61, 2, 260]
+  ];
+  var WATERS = [
+    ["青海湖", 100.18, 36.88, 5], ["鄱阳湖", 116.25, 29.05, 4], ["洞庭湖", 112.9, 29.25, 4], ["太湖", 120.22, 31.2, 3], ["纳木错", 90.6, 30.72, 3],
+    ["色林错", 88.95, 31.8, 2, 300], ["呼伦湖", 117.4, 49.0, 3], ["博斯腾湖", 87.0, 41.98, 2, 300], ["兴凯湖", 132.4, 45.1, 3], ["洪泽湖", 118.55, 33.3, 2, 300],
+    ["贝加尔湖", 107.6, 53.4, 6], ["巴尔喀什湖", 76.0, 46.45, 5], ["伊塞克湖", 77.3, 42.45, 4], ["库苏古尔湖", 100.45, 51.05, 3],
+    ["洞里萨湖", 104.0, 12.9, 3], ["斋桑泊", 84.0, 48.0, 3], ["乌布苏湖", 92.8, 50.3, 2, 300]
+  ];
+  // [label, river-name in the data, fraction along its path, priority, maxDistance]
+  var RIVER_LABELS = [
+    ["长江", "长江", 0.72, 6], ["金沙江", "长江", 0.25, 4], ["黄河", "黄河", 0.55, 6], ["雅鲁藏布江", "雅鲁藏布江", 0.28, 4],
+    ["布拉马普特拉河", "雅鲁藏布江", 0.72, 4], ["恒河", "恒河", 0.5, 5], ["印度河", "印度河", 0.66, 5], ["澜沧江", "湄公河", 0.27, 4],
+    ["湄公河", "湄公河", 0.7, 5], ["怒江", "怒江", 0.4, 3], ["萨尔温江", "怒江", 0.8, 3], ["伊洛瓦底江", "伊洛瓦底江", 0.6, 4],
+    ["黑龙江", "黑龙江", 0.35, 5], ["松花江", "松花江", 0.75, 3], ["嫩江", "嫩江", 0.4, 2, 400], ["珠江", "珠江", 0.62, 4],
+    ["淮河", "淮河", 0.45, 3], ["汉江", "汉江", 0.45, 3], ["塔里木河", "塔里木河", 0.5, 3], ["伊犁河", "伊犁河", 0.55, 3],
+    ["额尔齐斯河", "额尔齐斯河", 0.62, 3], ["鸭绿江", "鸭绿江", 0.5, 2, 400], ["乌苏里江", "乌苏里江", 0.5, 2, 400], ["红河", "红河", 0.45, 2],
+    ["色楞格河", "色楞格河", 0.45, 2], ["湄南河", "湄南河", 0.4, 2, 400], ["阿姆河", "阿姆河", 0.55, 3], ["锡尔河", "锡尔河", 0.55, 3]
+  ];
+  var SEAS = [["渤海", 120.0, 38.8], ["黄海", 123.4, 35.4], ["东海", 125.0, 29.6], ["南海", 114.5, 17.5], ["台湾海峡", 119.6, 24.3],
+    ["日本海", 134.5, 40.5], ["鄂霍次克海", 144.6, 53.5], ["菲律宾海", 131.0, 21.5], ["太平洋", 141.0, 27.5], ["孟加拉湾", 88.5, 16.0],
+    ["阿拉伯海", 65.0, 16.0], ["安达曼海", 96.5, 12.0], ["泰国湾", 101.5, 9.8], ["北部湾", 107.7, 20.3]];
+  var ISLES = [["东沙群岛", 116.8, 20.95], ["西沙群岛", 112.0, 16.5], ["中沙群岛", 114.5, 15.6], ["南沙群岛", 114.0, 9.6], ["黄岩岛", 117.75, 15.15]];
+  var CAPITALS_CN = [["北京", 116.40, 39.90], ["上海", 121.47, 31.23], ["天津", 117.20, 39.13], ["重庆", 106.55, 29.56], ["哈尔滨", 126.63, 45.75],
+    ["长春", 125.32, 43.82], ["沈阳", 123.43, 41.80], ["呼和浩特", 111.75, 40.84], ["石家庄", 114.51, 38.04], ["太原", 112.55, 37.87],
+    ["济南", 117.00, 36.65], ["郑州", 113.62, 34.75], ["西安", 108.94, 34.34], ["兰州", 103.83, 36.06], ["西宁", 101.78, 36.62],
+    ["银川", 106.23, 38.49], ["乌鲁木齐", 87.62, 43.83], ["拉萨", 91.13, 29.65], ["成都", 104.07, 30.57], ["贵阳", 106.63, 26.65],
+    ["昆明", 102.83, 24.88], ["南宁", 108.37, 22.82], ["广州", 113.26, 23.13], ["海口", 110.35, 20.02], ["福州", 119.30, 26.08],
+    ["台北", 121.56, 25.04], ["杭州", 120.15, 30.27], ["南京", 118.80, 32.06], ["合肥", 117.23, 31.82], ["南昌", 115.86, 28.68],
+    ["长沙", 112.94, 28.23], ["武汉", 114.31, 30.59], ["香港", 114.17, 22.32], ["澳门", 113.54, 22.20]];
+  var CITIES_CN = [["大连", 121.61, 38.91], ["青岛", 120.38, 36.07], ["厦门", 118.09, 24.48], ["深圳", 114.06, 22.54], ["苏州", 120.58, 31.30],
+    ["喀什", 75.99, 39.47], ["和田", 79.92, 37.11], ["格尔木", 94.90, 36.40], ["日喀则", 88.88, 29.27], ["林芝", 94.36, 29.65],
+    ["大理", 100.23, 25.61], ["丽江", 100.23, 26.87], ["桂林", 110.29, 25.27], ["洛阳", 112.45, 34.62], ["包头", 109.84, 40.66],
+    ["齐齐哈尔", 123.92, 47.35], ["漠河", 122.53, 52.97], ["敦煌", 94.66, 40.14], ["吐鲁番", 89.19, 42.95], ["伊宁", 81.32, 43.92],
+    ["阿勒泰", 88.14, 47.85], ["三亚", 109.51, 18.25], ["景洪", 100.80, 22.01], ["延吉", 129.51, 42.89], ["二连浩特", 111.98, 43.65],
+    ["满洲里", 117.43, 49.60], ["哈密", 93.51, 42.83], ["攀枝花", 101.72, 26.58], ["宜宾", 104.64, 28.75], ["宜昌", 111.29, 30.69],
+    ["酒泉", 98.49, 39.73], ["张掖", 100.45, 38.93], ["玉树", 97.0, 33.0], ["那曲", 92.05, 31.48], ["狮泉河", 80.1, 32.5],
+    ["昌都", 97.17, 31.14], ["汕头", 116.68, 23.35], ["温州", 120.70, 28.0], ["赣州", 114.93, 25.83], ["遵义", 106.93, 27.73],
+    ["绵阳", 104.68, 31.47], ["泉州", 118.68, 24.87], ["大同", 113.30, 40.08], ["呼伦贝尔", 119.77, 49.21], ["库尔勒", 86.15, 41.76],
+    ["阿克苏", 80.26, 41.17], ["克拉玛依", 84.87, 45.58], ["牡丹江", 129.63, 44.55], ["九江", 116.0, 29.71], ["岳阳", 113.13, 29.36],
+    ["襄阳", 112.14, 32.04], ["徐州", 117.18, 34.26], ["烟台", 121.45, 37.46], ["秦皇岛", 119.60, 39.94], ["北海", 109.12, 21.48]];
+  var CAPITALS_NB = [["乌兰巴托", 106.92, 47.92], ["阿斯塔纳", 71.43, 51.13], ["比什凯克", 74.59, 42.87], ["杜尚别", 68.78, 38.56],
+    ["塔什干", 69.24, 41.30], ["喀布尔", 69.21, 34.53], ["伊斯兰堡", 73.05, 33.68], ["新德里", 77.21, 28.61], ["加德满都", 85.32, 27.71],
+    ["廷布", 89.64, 27.47], ["达卡", 90.41, 23.81], ["内比都", 96.13, 19.76], ["万象", 102.63, 17.97], ["河内", 105.85, 21.03],
+    ["曼谷", 100.50, 13.75], ["金边", 104.92, 11.56], ["平壤", 125.75, 39.02], ["首尔", 126.98, 37.57], ["东京", 139.69, 35.69],
+    ["马尼拉", 120.98, 14.60], ["科伦坡", 79.86, 6.93], ["斯里巴加湾", 114.94, 4.89]];
+  var CITIES_NB = [["伊尔库茨克", 104.30, 52.29], ["赤塔", 113.50, 52.03], ["哈巴罗夫斯克", 135.07, 48.48], ["符拉迪沃斯托克", 131.89, 43.12],
+    ["新西伯利亚", 82.92, 55.03], ["阿拉木图", 76.89, 43.24], ["卡拉奇", 67.01, 24.86], ["拉合尔", 74.36, 31.55], ["孟买", 72.88, 19.08],
+    ["加尔各答", 88.36, 22.57], ["班加罗尔", 77.59, 12.97], ["金奈", 80.27, 13.08], ["仰光", 96.16, 16.87], ["曼德勒", 96.08, 21.97],
+    ["胡志明市", 106.63, 10.82], ["大阪", 135.50, 34.69], ["札幌", 141.35, 43.06], ["釜山", 129.08, 35.18], ["乌兰乌德", 107.6, 51.83],
+    ["撒马尔罕", 66.96, 39.65], ["白沙瓦", 71.58, 34.01], ["勒克瑙", 80.95, 26.85], ["吉大港", 91.83, 22.36], ["清迈", 98.99, 18.79]];
+
+  function buildLabels() {
+    REGIONS.forEach(function (r) { labels.push(mkLabel("region", r[0], r[1], r[2], { prio: r[3], cls: r[4], lift: 1.0, maxD: r[5] })); });
+    COUNTRIES.forEach(function (r) { labels.push(mkLabel("country", r[0], r[1], r[2], { prio: r[3], cls: r[4], lift: 1.0 })); });
+    RANGES.forEach(function (r) { labels.push(mkLabel("range", r[0], r[1], r[2], { prio: r[3], lift: 0.8, maxD: r[5] })); });
+    PEAKS.forEach(function (p) { labels.push(mkLabel("peak", [p[0], p[1]], p[2], p[3], { prio: p[4], lift: 0.25, maxD: p[5] })); });
+    WATERS.forEach(function (w) { labels.push(mkLabel("water", w[0], w[1], w[2], { prio: w[3], lift: 0.4, maxD: w[4] })); });
+    var byName = {}; DATA.rivers.forEach(function (r) { byName[r.name] = r.path; });
+    RIVER_LABELS.forEach(function (r) {
+      var path = byName[r[1]]; if (!path) return;
+      var p = pointAlong(path, r[2]);
+      labels.push(mkLabel("water", r[0], p[0], p[1], { prio: r[3], lift: 0.4, maxD: r[4] }));
+    });
+    SEAS.forEach(function (s) { labels.push(mkLabel("sea", s[0], s[1], s[2], { prio: 2, onBase: true, layer: "water" })); });
+    ISLES.forEach(function (s) { labels.push(mkLabel("isle", s[0], s[1], s[2], { prio: 1.5, onBase: true, layer: "water" })); });
+    CAPITALS_CN.forEach(function (c) { labels.push(mkLabel("city", c[0], c[1], c[2], { prio: c[0] === "北京" ? 7 : 3.2, cls: c[0] === "北京" ? "cap" : null, lift: 0.15, maxD: c[0] === "北京" ? 1e9 : 420 })); });
+    CAPITALS_NB.forEach(function (c) { labels.push(mkLabel("city", c[0], c[1], c[2], { prio: 3, cls: "cap", lift: 0.15, maxD: 420 })); });
+    CITIES_CN.forEach(function (c) { labels.push(mkLabel("city", c[0], c[1], c[2], { prio: 1.2, lift: 0.15, maxD: 170 })); });
+    CITIES_NB.forEach(function (c) { labels.push(mkLabel("city", c[0], c[1], c[2], { prio: 1.1, lift: 0.15, maxD: 170 })); });
+    DATA.provcp.forEach(function (p) {
+      if (!p[1]) return;
+      var nm = p[0];
+      labels.push(mkLabel("prov", nm, p[1][0], p[1][1], { prio: 1, lift: 0.6, layer: "prov" }));
+    });
+  }
+  function pointAlong(path, t) {
+    var L = [0];
+    for (var i = 1; i < path.length; i++) L.push(L[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+    var target = L[L.length - 1] * t;
+    for (i = 1; i < path.length; i++) if (L[i] >= target) {
+      var f = (target - L[i - 1]) / ((L[i] - L[i - 1]) || 1);
+      return [path[i - 1][0] + (path[i][0] - path[i - 1][0]) * f, path[i - 1][1] + (path[i][1] - path[i - 1][1]) * f];
+    }
+    return path[path.length - 1];
+  }
+  var ribbonScale = 1;
+  function refreshHeights() {
+    ribbonScale = Math.max(0.12, Math.min(1, camera.position.distanceTo(controls.target) / 260));
+    drapes.forEach(function (d) { d.update(); });
+    labels.forEach(function (L) { L.y = yOf(Math.max(0, heightAt(L.lon, L.lat))) + L.lift; });
+    dirty = true;
+  }
+
+  var tmpV = new THREE.Vector3();
+  function placeLabels() {
+    var W = window.innerWidth, Hh = window.innerHeight, placed = [], vis = [];
+    var camD = camera.position.distanceTo(controls.target);
+    for (var i = 0; i < labels.length; i++) {
+      var L = labels[i];
+      if (!layerOn[L.layer] || camD > L.maxD) { if (L.shown) { L.el.style.transform = "translate(-9999px,-9999px)"; L.shown = false; } continue; }
+      tmpV.set(L.x, L.onBase ? BASE_Y : L.y, L.z).project(camera);
+      if (tmpV.z > 1 || tmpV.z < -1) L.sx = null; else { L.sx = (tmpV.x + 1) / 2 * W; L.sy = (1 - tmpV.y) / 2 * Hh; }
+      vis.push(L);
+    }
+    vis.sort(function (a, b) { return b.prio - a.prio; });
+    for (i = 0; i < vis.length; i++) {
+      L = vis[i];
+      var ok = L.sx !== null && L.sx > -40 && L.sx < W + 40 && L.sy > -20 && L.sy < Hh + 20;
+      if (ok) {
+        if (!L.w) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
+        var ax = L.anchorLeft ? 6 : L.w / 2;
+        var r = { x: L.sx - ax - 3, y: L.sy - L.h / 2 - 2, w: L.w + 6, h: L.h + 4 };
+        if (L.type === "peak") r.y = L.sy - L.h + 4;
+        for (var k = 0; k < placed.length && ok; k++) {
+          var p = placed[k];
+          if (r.x < p.x + p.w && r.x + r.w > p.x && r.y < p.y + p.h && r.y + r.h > p.y) ok = false;
+        }
+        if (ok) { placed.push(r); L.el.style.transform = "translate(" + (r.x + 3).toFixed(1) + "px," + (r.y + 2).toFixed(1) + "px)"; L.shown = true; }
+      }
+      if (!ok && L.shown) { L.el.style.transform = "translate(-9999px,-9999px)"; L.shown = false; }
+    }
+  }
+
+  // ---------- picking ----------
+  var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  function pick(clientX, clientY) {
+    var rect = renderer.domElement.getBoundingClientRect();
+    ndc.set((clientX - rect.left) / rect.width * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    var o = ray.ray.origin, d = ray.ray.direction, maxY = yOf(9000) + 1, t = 0;
+    if (o.y > maxY) { if (d.y >= 0) return null; t = (o.y - maxY) / -d.y; }
+    var camD = camera.position.distanceTo(controls.target), step = Math.max(0.03, Math.min(0.4, camD / 900));
+    for (var s = 0; s < 9000; s++, t += step) {
+      var x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
+      if (y < BASE_Y - 1) return null;
+      var lon = xToLon(x), lat = zToLat(z);
+      if (lon < LON0 || lon > LON1 || lat < LAT0 || lat > LAT1) continue;
+      if (cellDrawn(lon, lat) && y <= yOf(heightAt(lon, lat))) {
+        var a = t - step, b = t;
+        for (var it = 0; it < 14; it++) { var m = (a + b) / 2, ll = xToLon(o.x + d.x * m), la = zToLat(o.z + d.z * m);
+          if (o.y + d.y * m <= yOf(heightAt(ll, la))) b = m; else a = m; }
+        return { lon: xToLon(o.x + d.x * b), lat: zToLat(o.z + d.z * b) };
+      }
+    }
+    return null;
+  }
+  var readout = document.getElementById("readout");
+  function showReadout(hit) {
+    if (!hit) { readout.hidden = true; return; }
+    var e = heightAt(hit.lon, hit.lat), ni = nearestIdx(hit.lon, hit.lat);
+    var reg = ni >= 0 ? REGION[ni] : 0, isW = ni >= 0 && WATER[ni];
+    var name = reg ? DATA.names[reg] : "";
+    var eTxt = Math.abs(e) < 1000 ? Math.round(e / 10) * 10 : Math.round(e / 50) * 50;
+    readout.innerHTML = (name ? "<b>" + name + "</b> · " : "") + '<span class="num">' + hit.lat.toFixed(2) + "°N " + hit.lon.toFixed(2) + "°E</span> · " +
+      (isW ? "湖面约 " : "海拔约 ") + '<span class="num">' + eTxt.toLocaleString("zh-CN") + "</span> 米";
+    readout.hidden = false;
+  }
+
+  // ---------- navigation ----------
+  var cvs = renderer.domElement, downAt = null;
+  cvs.addEventListener("pointerdown", function (ev) { downAt = [ev.clientX, ev.clientY, performance.now()]; stopSpin(); });
+  cvs.addEventListener("pointerup", function (ev) {
+    if (downAt && Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) < 6 && performance.now() - downAt[2] < 500 && H) showReadout(pick(ev.clientX, ev.clientY));
+    downAt = null;
+  });
+  var hoverPending = false;
+  cvs.addEventListener("pointermove", function (ev) {
+    if (ev.pointerType !== "mouse" || ev.buttons || hoverPending || !H) return;
+    hoverPending = true;
+    requestAnimationFrame(function () { hoverPending = false; showReadout(pick(ev.clientX, ev.clientY)); });
+  });
+  cvs.addEventListener("pointerleave", function () { readout.hidden = true; });
+
+  var groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), tmpHit = new THREE.Vector3();
+  function worldUnder(cx, cy) {
+    var h = H ? pick(cx, cy) : null;
+    if (h) return new THREE.Vector3(lonToX(h.lon), yOf(heightAt(h.lon, h.lat)), latToZ(h.lat));
+    var rect = cvs.getBoundingClientRect();
+    ndc.set((cx - rect.left) / rect.width * 2 - 1, -((cy - rect.top) / rect.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    return ray.ray.intersectPlane(groundPlane, tmpHit) ? tmpHit.clone() : null;
+  }
+  var XMIN = lonToX(LON0), XMAX = lonToX(LON1), ZMIN = latToZ(LAT1), ZMAX = latToZ(LAT0);
+  function clampTarget() {
+    var t = controls.target, ox = t.x, oy = t.y, oz = t.z;
+    t.x = Math.max(XMIN, Math.min(XMAX, t.x));
+    t.z = Math.max(ZMIN, Math.min(ZMAX, t.z));
+    t.y = Math.max(0, Math.min(yOf(9000), t.y));
+    if (t.x !== ox || t.y !== oy || t.z !== oz) camera.position.add(new THREE.Vector3(t.x - ox, t.y - oy, t.z - oz));
+  }
+  function zoomAt(cx, cy, factor) {
+    var dist = camera.position.distanceTo(controls.target);
+    var nd = Math.min(MAX_D, Math.max(MIN_D, dist * factor));
+    factor = nd / dist;
+    if (Math.abs(factor - 1) < 1e-4) return;
+    var p = worldUnder(cx, cy) || controls.target.clone();
+    camera.position.sub(p).multiplyScalar(factor).add(p);
+    controls.target.sub(p).multiplyScalar(factor).add(p);
+    clampTarget(); controls.update(); lastMove = performance.now(); dirty = true;
+  }
+  cvs.addEventListener("wheel", function (ev) {
+    ev.preventDefault(); stopSpin();
+    var dy = ev.deltaY * (ev.deltaMode === 1 ? 16 : ev.deltaMode === 2 ? 400 : 1);
+    dy = Math.max(-240, Math.min(240, dy));
+    zoomAt(ev.clientX, ev.clientY, Math.exp(dy * (ev.ctrlKey ? 0.008 : 0.0016)));
+  }, { passive: false });
+  cvs.addEventListener("dblclick", function (ev) { stopSpin(); zoomAt(ev.clientX, ev.clientY, 0.45); });
+  var touchPts = new Map(), pinchD = 0;
+  cvs.addEventListener("pointerdown", function (ev) { if (ev.pointerType === "touch") { touchPts.set(ev.pointerId, [ev.clientX, ev.clientY]); pinchD = 0; } });
+  cvs.addEventListener("pointermove", function (ev) {
+    if (!touchPts.has(ev.pointerId)) return;
+    touchPts.set(ev.pointerId, [ev.clientX, ev.clientY]);
+    if (touchPts.size !== 2) return;
+    var p = Array.from(touchPts.values()), d = Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]);
+    if (pinchD && d > 0) zoomAt((p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2, pinchD / d);
+    pinchD = d;
+  });
+  function endTouch(ev) { touchPts.delete(ev.pointerId); pinchD = 0; }
+  cvs.addEventListener("pointerup", endTouch); cvs.addEventListener("pointercancel", endTouch);
+  document.getElementById("zin").addEventListener("click", function () { stopSpin(); zoomAt(window.innerWidth / 2, window.innerHeight / 2, 0.6); });
+  document.getElementById("zout").addEventListener("click", function () { stopSpin(); zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1 / 0.6); });
+
+  var HALF_W_CN = 31.25 * KX, HALF_D_CN = 18.25 * KZ;
+  function homeView() {
+    var aspect = camera.aspect, vf = camera.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * aspect);
+    var portrait = aspect < 0.8;
+    var dist = portrait ? HALF_W_CN * 0.6 / Math.tan(hf / 2) : Math.max(HALF_W_CN * 0.95 / Math.tan(hf / 2), HALF_D_CN * 1.3 / Math.tan(vf / 2));
+    var pol = (portrait ? 40 : 48) * Math.PI / 180;
+    controls.target.set(portrait ? 5 : 0, 0, portrait ? 30 : 18);
+    camera.position.set(0, Math.cos(pol) * dist, Math.sin(pol) * dist + controls.target.z);
+    controls.update(); lastMove = performance.now(); dirty = true;
+  }
+
+  // ---------- UI ----------
+  var spinBtn = document.getElementById("spin");
+  function stopSpin() { if (controls.autoRotate) { controls.autoRotate = false; spinBtn.setAttribute("aria-pressed", "false"); } }
+  spinBtn.addEventListener("click", function () {
+    controls.autoRotate = !controls.autoRotate; spinBtn.setAttribute("aria-pressed", String(controls.autoRotate));
+  });
+  document.getElementById("reset").addEventListener("click", function () { homeView(); });
+  document.querySelectorAll(".chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var k = b.dataset.layer, on = b.getAttribute("aria-pressed") !== "true";
+      b.setAttribute("aria-pressed", String(on)); layerOn[k] = on;
+      drapes.forEach(function (d) { if (d.layer === k) d.meshes.forEach(function (m) { m.visible = on; }); });
+      dirty = true;
+    });
+  });
+  var exagIn = document.getElementById("exag"), exagOut = document.getElementById("exagOut"), exagPending = false;
+  exagIn.addEventListener("input", function () {
+    exag = +exagIn.value; exagOut.textContent = "×" + exag;
+    if (exagPending || !H) return; exagPending = true;
+    requestAnimationFrame(function () { exagPending = false; applyExaggeration(); });
+  });
+
+  function resize() {
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); dirty = true;
+  }
+  window.addEventListener("resize", resize);
+  var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  (mq.addEventListener ? mq.addEventListener("change", themeColors) : mq.addListener(themeColors));
+  new MutationObserver(themeColors).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  var dirty = true;
+  controls.addEventListener("change", function () { dirty = true; lastMove = performance.now(); });
+
+  function loop() {
+    requestAnimationFrame(loop);
+    var moved = controls.update();
+    clampTarget();
+    var now = performance.now();
+    maybeUpdatePatch(now);
+    updateRibbonsForZoom();
+    if (dirty || moved || controls.autoRotate) { renderer.render(scene, camera); placeLabels(); dirty = false; }
+  }
+
+  // ---------- boot ----------
+  resize();
+  Promise.all([unpack(DATA.h), unpack(DATA.region), unpack(DATA.relief)]).then(function (res) {
+    var u16 = new Uint16Array(res[0]);
+    H = new Float32Array(NX * NY); WATER = new Uint8Array(NX * NY);
+    for (var k = 0; k < u16.length; k++) { var v = u16[k]; WATER[k] = v & 0x8000 ? 1 : 0; H[k] = (v & 0x7fff) - 500; }
+    REGION = new Uint8Array(res[1]); RELIEF = new Uint8Array(res[2]);
+    buildCells();
+    buildTerrain();
+    DATA.rivers.forEach(function (r) { addRiver(r.path, r.w === 3 ? 0.42 : r.w === 2 ? 0.32 : 0.2); });
+    addLines(DATA.prov, "border", 0xffffff, 0.5, 0.06);
+    addBorderRibbons(DATA.borders, "nborder", 7, 1.8, 0xf2a7c0, 0.5, 0x6b2147, 18);
+    addBorderRibbons(DATA.cnborder, "nborder", 11, 3, 0xee8fb0, 0.6, 0x5c1238, 24);
+    buildLabels();
+    addGraticule();
+    themeColors();
+    applyExaggeration();
+    homeView();
+    statusEl.hidden = true;
+    window.__terrainReady = true;
+    loop();
+  }).catch(function (err) {
+    statusEl.textContent = "地形数据解码失败：" + (err && err.message ? err.message : err);
+  });
+
+  // test hook (harmless for viewers)
+  window.__view = function (lon, lat, dist, polarDeg, azDeg) {
+    var t = new THREE.Vector3(lonToX(lon), 0, latToZ(lat)), pol = (polarDeg || 45) * Math.PI / 180, az = (azDeg || 0) * Math.PI / 180;
+    controls.target.copy(t);
+    camera.position.set(t.x + Math.sin(pol) * Math.sin(az) * dist, Math.cos(pol) * dist, t.z + Math.sin(pol) * Math.cos(az) * dist);
+    controls.update(); lastMove = 0; lastPatchCheck = 0; maybeUpdatePatch(performance.now() + 1000); dirty = true;
+  };
+})();
+</script>
