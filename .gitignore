@@ -2,7 +2,26 @@
 sources/
 # intermediate build output
 build/
+
+# node (playwright for tools/screenshot.js is installed ad hoc)
 node_modules/
+package.json
+package-lock.json
+test-results/
+
+# python
 __pycache__/
 *.pyc
+.venv/
+venv/
+
+# local tool state
+.data-adk/
+.env
+
+# editors / OS
+.vscode/
+.idea/
+*.swp
 .DS_Store
+Thumbs.db

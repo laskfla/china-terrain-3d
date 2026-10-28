@@ -89,4 +89,4 @@ docs/                       README 用的截图
 
 ## 许可
 
-项目代码尚未指定许可证，如需开源，可以自行添加 `LICENSE` 文件（例如 MIT）。第三方数据和库遵循各自的许可，见 [NOTICE.md](NOTICE.md)。
+项目代码采用 [MIT License](LICENSE)。第三方数据和库遵循各自的许可，见 [NOTICE.md](NOTICE.md)。
