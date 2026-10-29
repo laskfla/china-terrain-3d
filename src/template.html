@@ -159,6 +159,19 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .tl-band.cur { opacity: 1; box-shadow: inset 0 0 0 1.5px var(--ink); }
 .tl-track input[type=range] { display: block; margin: 0; }
 #tlNote { font-size: 11.5px; color: var(--muted); line-height: 1.5; min-height: 1.5em; }
+#tlWater { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: -4px; }
+#tlWater b { color: #2a6fa8; font-weight: 600; }
+
+.lb.note { font-size: 11.5px; font-weight: 700; color: #6b3a08; letter-spacing: 0.04em;
+  text-shadow: 0 0 3px rgba(255, 250, 240, 1), 0 0 6px rgba(255, 250, 240, 0.85); }
+.lb.note .mk { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 4px; vertical-align: -2px;
+  background: #c26d12; color: #fff; font: italic 700 10px/14px Georgia, serif; text-align: center; box-shadow: 0 0 0 1.5px #fff7ea; text-shadow: none; }
+#geoCard { top: 58px; left: max(16px, env(safe-area-inset-left, 0px)); width: min(380px, calc(100vw - 32px)); padding: 11px 14px 12px; }
+#geoCard h3 { margin: 0 26px 6px 0; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.08em; }
+#geoCard h3 .mk { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-right: 6px; vertical-align: -2px;
+  background: #c26d12; color: #fff; font: italic 700 11px/16px Georgia, serif; text-align: center; }
+#geoCard p { margin: 0; font-size: 12.5px; line-height: 1.7; }
+#geoCard .x { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; padding: 0; justify-content: center; font-size: 15px; }
 
 #readout { left: 50%; transform: translateX(-50%); bottom: calc(176px + env(safe-area-inset-bottom, 0px)); pointer-events: none;
   background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px;
@@ -186,8 +199,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   #viewbtns .btn { padding: 8px 10px; }
   #head { max-width: calc(100vw - 210px); }
   body.hist #legend { display: none; }
-  body.hist #readout { bottom: calc(280px + env(safe-area-inset-bottom, 0px)); }
-  body.hist #zoombtns { bottom: calc(292px + env(safe-area-inset-bottom, 0px)); }
+  body.hist #zoombtns { bottom: calc(318px + env(safe-area-inset-bottom, 0px)); }
+  body.hist #readout { bottom: calc(306px + env(safe-area-inset-bottom, 0px)); }
+  .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 12px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; }
 }
 </style>
 
@@ -229,6 +245,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 </div>
 
 <div id="readout" class="hud" hidden></div>
+<div id="geoCard" class="hud card" hidden role="dialog" aria-live="polite">
+  <button class="btn x" type="button" aria-label="关闭">×</button>
+  <h3><span class="mk">i</span><span id="geoTitle"></span></h3>
+  <p id="geoText"></p>
+</div>
 <div id="status" class="hud">正在构建地形…</div>
 
 <div id="tray" class="hud">
@@ -257,11 +278,13 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       <button class="btn" id="tlPlay" type="button" aria-label="自动播放" aria-pressed="false">▶</button>
     </div>
     <div id="tlNote"></div>
+    <div id="tlWater"></div>
   </div>
   <div id="controls" class="card">
     <div class="chips" role="group" aria-label="图层">
       <button class="chip" type="button" data-layer="territory" data-mode="hist" aria-pressed="true">疆域</button>
       <button class="chip" type="button" data-layer="ancient" data-mode="hist" aria-pressed="true">古城</button>
+      <button class="chip" type="button" data-layer="geonote" data-mode="hist" aria-pressed="true">地理变迁</button>
       <button class="chip" type="button" data-layer="region" aria-pressed="true">地形区</button>
       <button class="chip" type="button" data-layer="range" aria-pressed="true">山脉</button>
       <button class="chip" type="button" data-layer="peak" aria-pressed="true">山峰</button>
@@ -910,9 +933,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   var labelLayer = document.getElementById("labels");
   var labels = [];
   var layerOn = { region: true, range: true, peak: true, water: true, city: true, country: true, nborder: true, border: true, prov: false, grid: true,
-                  territory: true, ancient: true };
+                  territory: true, ancient: true, geonote: true };
   // layers tied to today's map, and layers drawn from the historical snapshot
-  var MODERN_LAYERS = { city: 1, country: 1, nborder: 1, border: 1, prov: 1 }, HIST_LAYERS = { territory: 1, ancient: 1 };
+  var MODERN_LAYERS = { city: 1, country: 1, nborder: 1, border: 1, prov: 1 }, HIST_LAYERS = { territory: 1, ancient: 1, geonote: 1 };
   var hist = { on: true, year: 741, polities: [] };
   function modernView() { return !hist.on || !hist.polities.length; }
   function layerShown(k) {
@@ -942,10 +965,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     el.className = "lb " + type + (o.cls ? " " + o.cls : "");
     if (type === "peak") el.innerHTML = '<span class="tri">▲</span>' + text[0] + '<span class="h">' + text[1] + "</span>";
     else if (type === "city") el.innerHTML = '<span class="dot"></span>' + text;
+    else if (type === "note") el.innerHTML = '<span class="mk">i</span>' + text;
     else el.textContent = text;
     labelLayer.appendChild(el);
     return { el: el, type: type, layer: o.layer || type, lon: lon, lat: lat, prio: o.prio || 0, lift: o.lift || 0, onBase: !!o.onBase,
-             maxD: o.maxD || 1e9, anchorLeft: type === "peak" || type === "city",
+             maxD: o.maxD || 1e9, anchorLeft: type === "peak" || type === "city" || type === "note",
              x: lonToX(lon), z: latToZ(lat), y: 0, w: 0, h: 0, shown: false };
   }
   // [name, lon, lat, priority, extra-class, maxDistance]
@@ -1124,7 +1148,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
           }
           if (ok) break;
         }
-        if (ok) { placed.push(r); L.el.style.transform = "translate(" + (r.x + 3).toFixed(1) + "px," + (r.y + 2).toFixed(1) + "px)"; L.shown = true; }
+        if (ok) { placed.push(r); L.rect = r; L.el.style.transform = "translate(" + (r.x + 3).toFixed(1) + "px," + (r.y + 2).toFixed(1) + "px)"; L.shown = true; }
       }
       if (!ok && L.shown) { L.el.style.transform = "translate(-9999px,-9999px)"; L.shown = false; }
     }
@@ -1189,14 +1213,26 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   var cvs = renderer.domElement, downAt = null;
   cvs.addEventListener("pointerdown", function (ev) { downAt = [ev.clientX, ev.clientY, performance.now()]; stopSpin(); });
   cvs.addEventListener("pointerup", function (ev) {
-    if (downAt && Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) < 6 && performance.now() - downAt[2] < 500 && H) showReadout(pick(ev.clientX, ev.clientY), ev.clientX, ev.clientY);
+    if (downAt && Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) < 6 && performance.now() - downAt[2] < 500 && H) {
+      // a tap on a note pins its card; a tap elsewhere closes it
+      var nL = noteAt(ev.clientX, ev.clientY);
+      if (nL) { showNote(nL, true); readout.hidden = true; }
+      else { hideNote(); showReadout(pick(ev.clientX, ev.clientY), ev.clientX, ev.clientY); }
+    }
     downAt = null;
   });
   var hoverPending = false;
   cvs.addEventListener("pointermove", function (ev) {
     if (ev.pointerType !== "mouse" || ev.buttons || hoverPending || !H) return;
     hoverPending = true;
-    requestAnimationFrame(function () { hoverPending = false; showReadout(pick(ev.clientX, ev.clientY), ev.clientX, ev.clientY); });
+    requestAnimationFrame(function () {
+      hoverPending = false;
+      var nL = noteAt(ev.clientX, ev.clientY);
+      cvs.style.cursor = nL ? "pointer" : "";
+      if (nL) { if (!geoPinned) showNote(nL, false); readout.hidden = true; return; }
+      if (!geoPinned) geoCard.hidden = true;
+      showReadout(pick(ev.clientX, ev.clientY), ev.clientX, ev.clientY);
+    });
   });
   cvs.addEventListener("pointerleave", function () { readout.hidden = true; });
 
@@ -1529,6 +1565,60 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     hydroTex.needsUpdate = true; dirty = true;
   }
 
+  // ---------- notes on places where the land changed most in historical times ----------
+  // Elevations barely change in 2,400 years, but coasts, rivers, lakes and deserts do; several of these
+  // changes (coastlines, sand) are described here rather than drawn. [title, lon, lat, text]
+  var GEO_NOTES = [
+    ["铜瓦厢决口", 114.95, 34.92, "1855 年（咸丰五年）黄河在河南兰考铜瓦厢决口，转向东北夺大清河入渤海，结束了自南宋以来约七百年南流夺淮的局面。今天黄河下游就是这次改道后的河道；旧河道成了苏北的废黄河。"],
+    ["废黄河口", 120.25, 34.3, "1128 年杜充决河、1194 年阳武决口以后，黄河长期在这里入黄海，大量泥沙使河口向海伸展了几十公里。1855 年黄河北徙后泥沙断供，这段海岸转为受海浪侵蚀后退。"],
+    ["范公堤 · 宋代海岸", 120.35, 33.2, "北宋天圣年间范仲淹主持修筑的捍海堰（范公堤）大致沿当时的海岸线。黄河夺淮的几百年间泥沙在苏北沿海堆积，海岸向东推进了几十公里，今天的海边已远在堤东。"],
+    ["长江口成陆", 121.6, 31.2, "六七千年前的海岸大约在今上海西部的“冈身”一带。此后长江泥沙不断淤积，海岸东移：今上海市区东部和浦东的大部分是唐宋以后陆续成陆的，崇明岛也是从唐代出露的沙洲逐渐长大而成。"],
+    ["珠江三角洲", 113.35, 22.75, "唐宋时广州以南还是一片多岛的浅海湾，今顺德、中山、番禺南部等地大多尚未成陆。宋代以后西江、北江泥沙淤积，加上人工筑堤围垦沙田，三角洲迅速向海扩展。"],
+    ["渤海西岸 · 贝壳堤", 117.6, 38.95, "天津平原上有几道平行于海岸的贝壳堤，是不同时期古海岸的遗迹。黄河（北流时期）和海河带来的泥沙使海岸线不断向东推进。"],
+    ["黄河新三角洲", 118.85, 37.72, "1855 年黄河改走今道后，在山东东营一带不断淤出新陆地，形成近代黄河三角洲，东营市很大一部分就建在这片新淤地上。1976 年起黄河改由清水沟入海，河口位置仍在变化。"],
+    ["云梦泽的消失", 113.35, 30.5, "先秦至汉代，江汉平原上有大片湖沼统称云梦泽。随着长江、汉水泥沙淤积，到魏晋南北朝时逐渐解体为许多小湖，江汉平原由此形成。"],
+    ["洞庭湖的盛衰", 112.55, 28.95, "云梦泽消失后，洞庭湖在东晋南朝以后逐渐扩大，到清代中后期达到最大，号称“八百里洞庭”。近代泥沙淤积和围湖垦田使它大大缩小，第一大淡水湖的位置让给了鄱阳湖。"],
+    ["巨野泽到梁山泊", 116.2, 35.95, "古巨野泽是鲁西南的大湖。五代至北宋黄河多次决口注入，湖面北移扩大，称梁山泊，周围号称八百里，是《水浒传》故事的背景。金元以后黄河南徙、泥沙淤平，湖泊逐渐干涸，残留为今东平湖。"],
+    ["洪泽湖的形成", 118.85, 33.05, "这里原是淮河边的一些小湖洼。黄河夺淮后淮河下游淤高、排水不畅，明代潘季驯又大筑高家堰蓄淮水冲刷黄河泥沙，众湖连成今天的洪泽湖，湖底高出东边的平原，成为“悬湖”。"],
+    ["南四湖的形成", 116.95, 35.05, "微山、昭阳、独山、南阳四湖是明代中后期在鲁南洼地积水形成的：黄河泛滥、运河改道筑堤，使泗水下游排水受阻，逐渐汇成一串湖泊。"],
+    ["罗布泊的干涸", 90.75, 39.8, "古称蒲昌海、盐泽。塔里木河、孔雀河下游多次改道，湖的位置和大小随之摆动。20 世纪上游大规模引水灌溉后，罗布泊在 1970 年代初完全干涸。"],
+    ["楼兰古城", 89.92, 40.52, "楼兰是汉代西域的重要城邦，公元 4 世纪以后废弃，主要与孔雀河改道、水源断绝有关。塔里木盆地在整个历史时期都是干旱区，变化的是河流和绿洲的位置，而不是整个地区由湿变干。"],
+    ["居延海的萎缩", 101.2, 42.05, "汉代居延泽水面广阔，汉军在此屯田戍守（出土居延汉简）。此后黑河下游改道、上游用水增加，湖泊逐渐萎缩，1990 年代一度干涸，2002 年起调水后部分恢复。"],
+    ["统万城与毛乌素沙地", 108.85, 37.99, "统万城是十六国时期赫连勃勃所建的大夏都城（413 年起筑），当时周围有湖泊河流。唐代以后过度垦殖放牧使沙化加剧，北宋初（994 年）城被废弃，如今埋在毛乌素沙地南缘。"],
+    ["黄土高原的水土流失", 107.9, 36.45, "历史时期黄土高原的森林和草原不断被开垦，水土流失加剧，黄河泥沙增多。下游河床随之淤高，这是黄河“善淤、善决、善徙”、频繁改道的根本原因。"]
+  ];
+  // the Yellow River's lower course at a given year (matches the river courses drawn above): [from, to, text]
+  var YELLOW_STAGES = [
+    [-9999, 10, "黄河走西汉以前的故道，经今河北中部在天津一带入渤海。"],
+    [11, 1047, "公元 11 年黄河改道，东汉王景治河（69 年）后走新道，在今山东利津一带入海，此后约八百年较为安定。"],
+    [1048, 1193, "北宋时黄河北流、东流并存、屡次决徙，大致在今天津与山东北部之间入海。"],
+    [1194, 1854, "黄河南流夺淮：1128 年杜充决河、1194 年阳武决口后，经今苏北入黄海，淮河下游被占。"],
+    [1855, 9999, "1855 年铜瓦厢决口后黄河北徙，走今道在山东入渤海；苏北留下废黄河。"]
+  ];
+  var noteLabels = [];
+  function buildGeoNotes() {
+    GEO_NOTES.forEach(function (n) {
+      var L = mkLabel("note", esc(n[0]), n[1], n[2], { layer: "geonote", prio: 9, lift: 0.3 });
+      L.note = n; labels.push(L); noteLabels.push(L);
+    });
+  }
+  function noteAt(cx, cy) {
+    if (modernView() || !layerShown("geonote") || cx == null) return null;
+    for (var i = 0; i < noteLabels.length; i++) {
+      var L = noteLabels[i], r = L.rect;
+      if (L.shown && r && cx >= r.x - 4 && cx <= r.x + r.w + 4 && cy >= r.y - 4 && cy <= r.y + r.h + 4) return L;
+    }
+    return null;
+  }
+  var geoCard = document.getElementById("geoCard"), geoPinned = false;
+  function showNote(L, pin) {
+    document.getElementById("geoTitle").textContent = L.note[0];
+    document.getElementById("geoText").textContent = L.note[3];
+    geoCard.hidden = false; geoPinned = !!pin;
+  }
+  function hideNote() { geoCard.hidden = true; geoPinned = false; }
+  geoCard.querySelector(".x").addEventListener("click", hideNote);
+
   var polLegend = document.getElementById("polLegend");
   function buildPolityLegend() {
     polLegend.innerHTML = "";
@@ -1545,6 +1635,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
   // ---------- timeline ----------
   var tlEl = document.getElementById("timeline"), yearIn = document.getElementById("tlYearIn");
+  var tlWater = document.getElementById("tlWater");
   var tlEra = document.getElementById("tlEra"), tlYear = document.getElementById("tlYear"), tlSeat = document.getElementById("tlSeat"), tlNote = document.getElementById("tlNote");
   var histBtn = document.getElementById("histBtn"), playBtn = document.getElementById("tlPlay");
   var curPhase = -1, bandEls = [];
@@ -1570,6 +1661,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       tlNote.textContent = ph.note || snap.cap || (snap.pol.length ? "" : "今日行政区划与国界");
     }
     applyLayers();   // river courses and lakes change within a phase too
+    var ys = null;
+    YELLOW_STAGES.forEach(function (s) { if (y >= s[0] && y <= s[1]) ys = s; });
+    tlWater.innerHTML = ys && !modernView() ? "<b>水系</b> · " + esc(ys[2]) : "";
     tlYear.textContent = yearText(y);
     updateSettlements(y);
     if (!fromSlider) yearIn.value = y;
@@ -1631,7 +1725,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
   }
   function initHistory() {
     var q = new URLSearchParams(location.search), y = parseInt(q.get("year"), 10);
-    buildTimeline(); buildSettlements();
+    buildTimeline(); buildSettlements(); buildGeoNotes();
     setYear(isFinite(y) ? y : hist.year);
     setHist(q.get("mode") !== "modern");
   }
