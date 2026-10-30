@@ -5,7 +5,7 @@
 // its polities, the deduplicated polity outlines (simplified to ~1 km, quantised to 0.01 deg,
 // delta-coded Int16, gzip + base64), the settlements with the years they are shown, and the
 // river courses, lakes and water labels that existed only in some years (e.g. the Yellow River's
-// former courses, Yunmeng and Juye marshes).
+// former courses, Yunmeng and Juye marshes), plus the Juyan lakes, which are drawn in this file.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -166,6 +166,23 @@ const hydroLakes = HYDRO.lakes.filter(timed).map((l) => [l.name, ...span(l), l.r
 // [text, lon, lat, kind, from, to]; labels still valid today (Yellow River, Hongze) are the page's own
 const hydroLabels = HYDRO.labels.filter((l) => l.vanish != null)
   .map((l) => [l.zh.replace(/\s+/g, ''), l.coord[0], l.coord[1], l.kind, ...span(l)]);
+// Juyan is not in jiangshan-map, and today's terrain has no water there, so its outlines are added here.
+// Schematic shapes with areas from the literature: Qin-Han ~720 km2, gone by about AD 250; West 267 and
+// East 35 km2 as of 1958, used for all later years (the fluctuations in between are not modelled).
+// West dried up in 1961, East in 1992; East was refilled from 2002 (a far `to`, not "today's lake").
+const JUYAN_EAST = [[[101.22, 42.28], [101.24, 42.31], [101.27, 42.31], [101.3, 42.28], [101.28, 42.25], [101.24, 42.25]]];
+hydroLakes.push(
+  ['Juyan Ze', OPEN0, 250, [[[101.48, 41.93], [101.55, 41.99], [101.66, 42.02], [101.79, 42.02], [101.91, 41.98], [101.96, 41.91], [101.9, 41.84], [101.77, 41.82], [101.63, 41.83], [101.52, 41.86]]]],
+  ['Juyan West', 251, 1960, [[[100.48, 42.29], [100.53, 42.34], [100.62, 42.36], [100.71, 42.34], [100.76, 42.29], [100.72, 42.24], [100.62, 42.22], [100.53, 42.24]]]],
+  ['Juyan East', 251, 1991, JUYAN_EAST],
+  ['Juyan East', 2002, OPEN1 - 1, JUYAN_EAST],
+);
+hydroLabels.push(
+  ['居延泽', 101.72, 42.1, 'lake', OPEN0, 250],
+  ['西居延海', 100.62, 42.45, 'lake', 251, 1960],
+  ['东居延海', 101.26, 42.4, 'lake', 251, 1991],
+  ['东居延海', 101.26, 42.4, 'lake', 2002, OPEN1],
+);
 
 // ---------- pack ----------
 for (const v of stream) if (v < -32768 || v > 32767) throw new Error(`value out of Int16 range: ${v}`);

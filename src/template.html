@@ -944,16 +944,17 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     if (HIST_LAYERS[k]) return !modernView();
     return true;
   }
-  // features that exist only in some years (o.years = [from, to]) or only on the historical map (o.histOnly)
+  // features that exist only in some years (o.years = [from, to]) or only on the historical map (o.histOnly);
+  // the timeline's last era has no polities but still follows the year (Lop Nur and Juyan dried up in it)
   function timeOk(o) {
-    if (modernView()) return !o.histOnly;
+    if (!hist.on) return !o.histOnly;
     return !o.years || (hist.year >= o.years[0] && hist.year <= o.years[1]);
   }
   function applyLayers() {
     if (histTone === modernView()) { histTone = !modernView(); recolorBase(); updatePatchGeometry(true); }
     drapes.forEach(function (d) { var on = layerShown(d.layer) && timeOk(d); d.meshes.forEach(function (m) { m.visible = on; }); });
     histUniforms.uHistOn.value = layerShown("territory") ? 1 : 0;
-    histUniforms.uHydroOn.value = !modernView() && layerShown("water") ? 1 : 0;
+    histUniforms.uHydroOn.value = hist.on && layerShown("water") ? 1 : 0;
     if (histUniforms.uHydroOn.value) drawHydro();
     document.querySelectorAll(".chip[data-mode]").forEach(function (b) { b.hidden = (b.dataset.mode === "hist") === modernView(); });
     document.getElementById("elevLegend").hidden = !modernView(); polLegend.hidden = modernView();
@@ -1583,7 +1584,7 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
     ["南四湖的形成", 116.95, 35.05, "微山、昭阳、独山、南阳四湖是明代中后期在鲁南洼地积水形成的：黄河泛滥、运河改道筑堤，使泗水下游排水受阻，逐渐汇成一串湖泊。"],
     ["罗布泊的干涸", 90.75, 39.8, "古称蒲昌海、盐泽。塔里木河、孔雀河下游多次改道，湖的位置和大小随之摆动。20 世纪上游大规模引水灌溉后，罗布泊在 1970 年代初完全干涸。"],
     ["楼兰古城", 89.92, 40.52, "楼兰是汉代西域的重要城邦，公元 4 世纪以后废弃，主要与孔雀河改道、水源断绝有关。塔里木盆地在整个历史时期都是干旱区，变化的是河流和绿洲的位置，而不是整个地区由湿变干。"],
-    ["居延海的萎缩", 101.2, 42.05, "汉代居延泽水面广阔，汉军在此屯田戍守（出土居延汉简）。此后黑河下游改道、上游用水增加，湖泊逐渐萎缩，1990 年代一度干涸，2002 年起调水后部分恢复。"],
+    ["居延海的萎缩", 101.2, 42.05, "秦汉时居延泽水面约七百多平方公里，汉军在此屯田戍守（出土居延汉简）。约公元 3 世纪以后古湖干涸或缩成小湖，黑河尾闾转到西北的东、西居延海。1958 年两湖只剩约 35 和 267 平方公里；上游用水增加后，西居延海 1961 年、东居延海 1992 年干涸，2002 年起调水后东居延海恢复。地图上的湖形是示意。"],
     ["统万城与毛乌素沙地", 108.85, 37.99, "统万城是十六国时期赫连勃勃所建的大夏都城（413 年起筑），当时周围有湖泊河流。唐代以后过度垦殖放牧使沙化加剧，北宋初（994 年）城被废弃，如今埋在毛乌素沙地南缘。"],
     ["黄土高原的水土流失", 107.9, 36.45, "历史时期黄土高原的森林和草原不断被开垦，水土流失加剧，黄河泥沙增多。下游河床随之淤高，这是黄河“善淤、善决、善徙”、频繁改道的根本原因。"]
   ];
